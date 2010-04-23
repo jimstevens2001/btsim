@@ -1,28 +1,14 @@
-class WorkQueue:
-	def __init__(self):
-		work_queue = []
-		cur_time = 0
+from work_queue import WorkQueue, WorkQueueException
 
-	def empty(self):
-		return (work_queue == [])
 
-	def dequeue():
-		pass
+# Event format is: [time, type, X, ...] (X and ... can be anything and is determined by the type)
 
-	def insert(event):
-		# TODO: Check event format is valid (will need a function for this)
-
-		# Check time
-		if event[2]
 
 # Create the main event queue.
-work_queue = WorkQueue()
-		
-
-# Record format is: [time, type, X, ...] (X and ... can be anything and is determined by the type
+wq = WorkQueue()
 
 # Main queue loop
-while work_queue != []:
-	
+while not wq.empty():
 	pass
 
+print 'Done'
