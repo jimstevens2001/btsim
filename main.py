@@ -6,7 +6,8 @@ from work_queue import WorkQueue, WorkQueueException
 
 #Node class to contain explicit copies of the bit field and peer lists
 class Node:
-	def __init__(self):
+	def __init__(self, node_id):
+		self.id = node_id
 		self.cur_blocks = [] # Current blocks held by the node.
 		self.want_blocks = [] # Blocks node is interested in.
 		self.peers = [] # Current set of peers.
@@ -25,10 +26,47 @@ class Node:
 		#=================================================
 
 	def add_peer(self, node_id):
-		
+		self.desired_peers = self.desired_peers-1
 		self.peers.append(node_id)
 
-	def remove_peer(self, 
+	def remove_peer(self, node_id):
+		del self.peers[node_id]
+		self.desired_peers = self.desired_peers+1
+
+	def get_peers(self):
+		# Get a list of all the nodes that we are not peers with.
+		all_nodes = nodes.keys()
+		all_nodes.remove(self.id)
+		[all_nodes.remove(i) for i in self.peers]
+
+		# Randomly decide how many peers we desire right now.
+		self.desired_peers = random.randint(self.min_peers, self.max_peers)
+		print 'node',self.id,'(',len(self.peers),'peers ) is querying the tracker and now wants at least',self.desired_peers
+
+		# If we already have at least desired_peers, then there is nothing to do.
+		if len(self.peers) >= self.desired_peers:
+			return
+
+		# Otherwise, get more peers until we have desired_peers (or there are none left to get).
+		num_peers = min([self.desired_peers-len(self.peers), len(all_nodes)])
+
+		for i in range(num_peers):
+			done = False
+			while not done:
+			#print 'all_nodes',all_nodes
+				if all_nodes != []:
+					new_peer = random.choice(all_nodes);
+				else:
+					break
+
+				all_nodes.remove(new_peer)
+
+				if len(nodes[new_peer].peers) < self.max_peers:
+				        #print nodes
+				        #print node_id,'and',new_peer,'are now peers'
+					nodes[new_peer].peers.append(self.id)
+					self.peers.append(new_peer)
+					done = True
 
 	
 
@@ -59,70 +97,26 @@ def add_node(event):
 	node_id = event[2]
 
 	# Add the new node to the nodes dictionary.
-	nodes[node_id] = {'peers': []}
+	nodes[node_id] = Node(node_id)
 
 	# Get peers for it.
-	get_peers(node_id)
+	nodes[node_id].get_peers()
 
 	# Schedule the first update_peers event.
 	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])
 
 def update_peers(event):
 	node_id = event[2]
-	get_peers(node_id)
+	nodes[node_id].get_peers()
 
 	# Schedule the next update_peers event.
-	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])
-
-
-def get_peers(node_id):
-	# Get out peers.
-	peers = nodes[node_id]['peers']
-
-	# Get a list of all the nodes that we are not peers with.
-	all_nodes = nodes.keys()
-	all_nodes.remove(node_id)
-	[all_nodes.remove(i) for i in peers]
-
-	# Randomly decide how many peers we desire right now.
-	desired_peers = random.randint(MIN_PEERS, MAX_PEERS)
-	print 'node',node_id,'(',len(peers),'peers ) is querying the tracker and now wants at least',desired_peers
-
-	# If we already have at least desired_peers, then there is nothing to do.
-	if len(peers) >= desired_peers:
-		return
-
-	# Otherwise, get more peers until we have desired_peers (or there are none left to get).
-	num_peers = min([desired_peers-len(peers), len(all_nodes)])
-
-	for i in range(num_peers):
-		done = False
-		while not done:
-			#print 'all_nodes',all_nodes
-			if all_nodes != []:
-				new_peer = random.choice(all_nodes);
-			else:
-				break
-
-			all_nodes.remove(new_peer)
-
-			if len(nodes[new_peer]['peers']) < MAX_PEERS:
-				#print nodes
-				#print node_id,'and',new_peer,'are now peers'
-				nodes[new_peer]['peers'].append(node_id)
-				peers.append(new_peer)
-				done = True
-	nodes[node_id]['peers'] = peers
-
-		
-	
-	
+	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])	
 
 
 for i in range(100,0, -1):
 	x = random.randint(0, 100) + i
 	wq.enqueue([x, ADD_NODE, i])
-wq.enqueue([10000, KILL_SIM])
+wq.enqueue([200, KILL_SIM])
 
 # Main queue loop
 while not wq.empty():
