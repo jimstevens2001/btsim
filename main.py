@@ -8,8 +8,6 @@ from work_queue import WorkQueue, WorkQueueException
 class Node:
 	def __init__(self, node_id):
 		self.id = node_id
-		self.cur_blocks = [] # Current blocks held by the node.
-		self.want_blocks = [] # Blocks node is interested in.
 		self.peers = [] # Current set of peers.
 		self.min_peers = 5
 		self.max_peers = 15
@@ -17,6 +15,8 @@ class Node:
 
 		# don't care about any of thie for now
 		#=================================================
+		# self.cur_blocks = [] # Current blocks held by the node.
+		# self.want_blocks = [] # Blocks node is interested in.
 		# self.gossip = [] # Recent gossip messages recieved (to be passed on when possible) - not sure about this
 		# self.max_up = 100 # Default maximum upload speed
 		# self.max_down = 100 # Default maximum download speed
@@ -26,7 +26,7 @@ class Node:
 		#=================================================
 
 	def add_peer(self, node_id):
-		self.desired_peers = self.desired_peers-1
+		self.desired_peers = self.desired_peers-1 # right now we don't need this
 		self.peers.append(node_id)
 
 	def remove_peer(self, node_id):
@@ -45,6 +45,7 @@ class Node:
 
 		# If we already have at least desired_peers, then there is nothing to do.
 		if len(self.peers) >= self.desired_peers:
+			#print 'but we are already at max'
 			return
 
 		# Otherwise, get more peers until we have desired_peers (or there are none left to get).
@@ -61,11 +62,11 @@ class Node:
 
 				all_nodes.remove(new_peer)
 
-				if len(nodes[new_peer].peers) < self.max_peers:
+				if len(nodes[new_peer].peers) < nodes[new_peer].max_peers:
 				        #print nodes
 				        #print node_id,'and',new_peer,'are now peers'
-					nodes[new_peer].peers.append(self.id)
-					self.peers.append(new_peer)
+					nodes[new_peer].add_peer(self.id)
+					self.add_peer(new_peer)
 					done = True
 
 	
