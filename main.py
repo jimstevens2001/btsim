@@ -17,6 +17,7 @@ nodes = {}
 # Events:
 # add_node: Additional parameters (id)
 ADD_NODE = 'add_node'
+KILL_SIM = 'kill_sim'
 
 def add_node(event):
 	node_id = event[2]
@@ -60,15 +61,24 @@ def add_node(event):
 for i in range(100,0, -1):
 	x = random.randint(0, 100) + i
 	wq.enqueue([x, ADD_NODE, i])
+wq.enqueue([400, KILL_SIM])
 
 # Main queue loop
 while not wq.empty():
-	next_event = wq.dequeue()
+	cur_event = wq.dequeue()
 
-	print 'Next event is',next_event[1],'at time',wq.cur_time
+	print 'Next event is',cur_event[1],'at time',wq.cur_time
 
-	if next_event[1] == ADD_NODE:
-		add_node(next_event)
+	event_type = cur_event[1]
+
+	if event_type == ADD_NODE:
+		add_node(cur_event)
+	elif event_type == KILL_SIM:
+		print 'KILL_SIM event at time',cur_event[0]
+		break
+	else:
+		print 'Invalid event type'
+		break
 
 print nodes
 
