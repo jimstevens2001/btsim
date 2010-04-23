@@ -58,7 +58,8 @@ def add_node(event):
 
 
 for i in range(100,0, -1):
-	wq.enqueue([i, ADD_NODE, i])
+	x = random.randint(0, 100) + i
+	wq.enqueue([x, ADD_NODE, i])
 
 # Main queue loop
 while not wq.empty():
