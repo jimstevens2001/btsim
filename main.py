@@ -2,6 +2,35 @@ import random
 
 from work_queue import WorkQueue, WorkQueueException
 
+#Node States - not sure if this should be in the node class
+
+#Node class to contain explicit copies of the bit field and peer lists
+class Node:
+	def __init__(self):
+		self.cur_blocks = [] # Current blocks held by the node.
+		self.want_blocks = [] # Blocks node is interested in.
+		self.peers = [] # Current set of peers.
+		self.min_peers = 5
+		self.max_peers = 15
+		self.desired_peers = random.randint(self.min_peers, self.max_peers)
+
+		# don't care about any of thie for now
+		#=================================================
+		# self.gossip = [] # Recent gossip messages recieved (to be passed on when possible) - not sure about this
+		# self.max_up = 100 # Default maximum upload speed
+		# self.max_down = 100 # Default maximum download speed
+		# self.altruism = leave # Current altruism setting
+		# self.curr_up = 0 # Value to keep track of current upload resources being spent
+		# self.curr_down = 0 # Value to keep track of current download resources being spent
+		#=================================================
+
+	def add_peer(self, node_id):
+		
+		self.peers.append(node_id)
+
+	def remove_peer(self, 
+
+	
 
 
 # Event format is: [time, type, X, ...] (X and ... can be anything and is determined by the type)
