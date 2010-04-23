@@ -22,14 +22,18 @@ def add_node(event):
 	node_id = event[2]
 	if node_id in nodes.keys():
 		pass
-	nodes[node_id] = {'friends': []}
+	nodes[node_id] = {'peers': []}
 
 
-	# Pick some friends (up to 5 for now)
+	# Pick some peers (up to 5 for now)
 	peers = []
 	all_nodes = nodes.keys()
-	MAX_FRIENDS = 5
-	num_peers = min([MAX_FRIENDS, len(all_nodes)])
+	all_nodes.remove(node_id)
+	MIN_PEERS = 5
+	MAX_PEERS = 15
+	desired_peers = random.randint(MIN_PEERS, MAX_PEERS)
+	print 'desired_peers for node',node_id,'is',desired_peers
+	num_peers = min([desired_peers, len(all_nodes)])
 	for i in range(num_peers):
 		done = False
 		while not done:
@@ -41,21 +45,19 @@ def add_node(event):
 
 			all_nodes.remove(new_peer)
 
-			if len(nodes[new_peer]['friends']) < MAX_FRIENDS:
+			if len(nodes[new_peer]['peers']) < MAX_PEERS:
 				#print nodes
 				#print node_id,'and',new_peer,'are now peers'
-				nodes[new_peer]['friends'].append(node_id)
+				nodes[new_peer]['peers'].append(node_id)
 				peers.append(new_peer)
 				done = True
-	nodes[node_id]['friends'] = peers
+	nodes[node_id]['peers'] = peers
 		
 	
 
-# TODO: Make a list to store nodes.
-# TODO: Figure out how to store peer connections.
 
 
-for i in range(20,0, -1):
+for i in range(100,0, -1):
 	wq.enqueue([i, ADD_NODE, i])
 
 # Main queue loop
