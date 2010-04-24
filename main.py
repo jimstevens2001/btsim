@@ -2,6 +2,31 @@ import random
 
 from work_queue import WorkQueue, WorkQueueException
 
+# Time must be non-negative integer.
+# Type must be a string.
+
+# Create the main event queue.
+wq = WorkQueue()
+
+# Create the main node dictionary.
+nodes = {}
+
+# Events:
+# Event format is: [time, type, X, ...] (X and ... can be anything and is determined by the type)
+
+ADD_NODE = 'add_node' 			# Param: node_id
+UPDATE_PEERS = 'update_peers' 		# Param: node_id
+EXCHANGE_ROUND = 'exchange_round' 	# Param: node_id
+REMOVE_NODE = 'remove_node'		# Param: node_id
+NEXT_DL = 'next_dl' # used to schedule additional piece downloads on fast peers
+KILL_SIM = 'kill_sim'			# No param
+
+# Constants
+MIN_PEERS = 5
+MAX_PEERS = 15
+QUERY_TIME = 100
+
+
 #Node States - not sure if this should be in the node class
 
 #Node class to contain explicit copies of the bit field and peer lists
@@ -34,14 +59,14 @@ class Node:
 
 	def remove_peer(self, node_id):
 		done = 0
-		for i in len(self.peers):
+		for i in range(len(self.peers)):
 			if self.peers[i].node_id == node_id:
 				self.peers.remove(node_id)
 				self.desired_peers = self.desired_peers+1
 				done = 1
 				break
 		if done == 0:
-			for i in len(self.unchoked):
+			for i in range(len(self.unchoked)):
 				if self.unchoked[i].node_id == node_id:
 					self.unchoked.remove(node_id)
 					self.desired_peers = self.desired_peers+1
@@ -96,7 +121,7 @@ class Node:
 		#first clear the set of unchoked peers
 		for i in unchoked:
 			self.peers.append(i)
-			self.unchoked:remove(i)
+			self.unchoked.remove(i)
 
 		#check to see that we have the number of peers that we wanted
 		if(len(self.peers) < self.desired_peers):
@@ -151,30 +176,8 @@ class Node:
 			
 
 
-# Event format is: [time, type, X, ...] (X and ... can be anything and is determined by the type)
-# Time must be non-negative integer.
-# Type must be a string.
 
-# Create the main event queue.
-wq = WorkQueue()
-
-# Create the main node dictionary.
-nodes = {}
-
-# Events:
-# add_node: Additional parameters (id)
-ADD_NODE = 'add_node'
-UPDATE_PEERS = 'update_peers'
-EXCHNGE_ROUND = 'exchange_round' # this will replace the update_peers operation
-REMOVE_NODE = 'remove_node'
-NEXT_DL = 'next_dl' # used to schedule additional piece downloads on fast peers
-KILL_SIM = 'kill_sim'
-
-# Constants
-MIN_PEERS = 5
-MAX_PEERS = 15
-QUERY_TIME = 100
-
+# Event Handlers
 
 def add_node(event):
 	node_id = event[2]
@@ -245,6 +248,8 @@ while not wq.empty():
 		add_node(cur_event)
 	elif event_type == UPDATE_PEERS:
 		update_peers(cur_event)
+	elif event_type == EXCHANGE_ROUND:
+		exchange_round(cur_event)	
 	elif event_type == KILL_SIM:
 		print 'KILL_SIM event at time',cur_event[0]
 		break
