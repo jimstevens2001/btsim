@@ -33,8 +33,20 @@ class Node:
 		self.peers.append(node_id)
 
 	def remove_peer(self, node_id):
-		self.peers.remove(node_id)
-		self.desired_peers = self.desired_peers+1
+		done = 0
+		for i in len(self.peers):
+			if self.peers[i].node_id == node_id:
+				self.peers.remove(node_id)
+				self.desired_peers = self.desired_peers+1
+				done = 1
+				break
+		if done == 0:
+			for i in len(self.unchoked):
+				if self.unchoked[i].node_id == node_id:
+					self.unchoked.remove(node_id)
+					self.desired_peers = self.desired_peers+1
+					done = 1
+					break
 
 	def get_peers(self):
 		# Get a list of all the nodes that we are not peers with.
@@ -81,7 +93,11 @@ class Node:
 			self.peers.append(i)
 			self.unchoked:remove(i)
 
-		#first take care of the optimistic unchoke
+		#check to see that we have the number of peers that we wanted
+		if(len(self.peers) < self.desired_peers):
+			self.get_peers()
+
+		#take care of the optimistic unchoke
 		self.update_op_unchoke()
 
 		#find the top four uploaders among your peers
@@ -144,6 +160,9 @@ nodes = {}
 # add_node: Additional parameters (id)
 ADD_NODE = 'add_node'
 UPDATE_PEERS = 'update_peers'
+ = 'unchoke' # this will replace the update_peers operation
+REMOVE_NODE = 'remove_node'
+NEXT_DL = 'next_dl' # used to schedule additional piece downloads on fast peers
 KILL_SIM = 'kill_sim'
 
 # Constants
@@ -169,7 +188,29 @@ def update_peers(event):
 	nodes[node_id].get_peers()
 
 	# Schedule the next update_peers event.
-	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])	
+	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])
+
+# when a node leaves the swarm
+def remove_node(event):
+	node_id = event[2]
+
+	# remove the node from all the peer and unchoked lists of the other nodes
+	for i in len(nodes):
+		nodes[i].remove_peer(node_id)
+	
+	# will need to cancel any pieces that we had expect to be downloaded from this node 
+	
+	# remove the node from the node list
+	nodes.remove(node_id)
+
+# Use this to update each peers download and upload rates per round and to decide 
+# also includes the unchoke algorithm at the beginning
+def exchange_round(event):
+	node_id = event[2]
+	nodes[node_id].get_peers()
+
+	# Schedule the next update_peers event.
+	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])
 
 
 for i in range(100,0, -1):
