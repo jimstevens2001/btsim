@@ -55,7 +55,12 @@ class Node:
 		[all_nodes.remove(i) for i in self.peers]
 
 		# Randomly decide how many peers we desire right now.
-		self.desired_peers = random.randint(self.min_peers, self.max_peers)
+
+		# Right now I think we need to keep the number of desired peers constant for a node
+		#===========================================================
+		# self.desired_peers = random.randint(self.min_peers, self.max_peers)
+		#===========================================================
+
 		print 'node',self.id,'(',len(self.peers),'peers ) is querying the tracker and now wants at least',self.desired_peers
 
 		# If we already have at least desired_peers, then there is nothing to do.
@@ -160,7 +165,7 @@ nodes = {}
 # add_node: Additional parameters (id)
 ADD_NODE = 'add_node'
 UPDATE_PEERS = 'update_peers'
- = 'unchoke' # this will replace the update_peers operation
+EXCHNGE_ROUND = 'exchange_round' # this will replace the update_peers operation
 REMOVE_NODE = 'remove_node'
 NEXT_DL = 'next_dl' # used to schedule additional piece downloads on fast peers
 KILL_SIM = 'kill_sim'
@@ -207,10 +212,20 @@ def remove_node(event):
 # also includes the unchoke algorithm at the beginning
 def exchange_round(event):
 	node_id = event[2]
-	nodes[node_id].get_peers()
+
+	# if we need more peers, get them
+	if (len(nodes[node_id].peers)+len(nodes[node_id].unchoked)) < nodes[node_id].desired_peers:
+		nodes[node_id].get_peers()
+
+	# run the unchoke algorithm
+	nodes[node_id].update_unchoke();
+
+	# let peers know that they're being uploaded to and how much
+	
+	# compute completed pieces
 
 	# Schedule the next update_peers event.
-	wq.enqueue([wq.cur_time + QUERY_TIME, UPDATE_PEERS, node_id])
+	wq.enqueue([wq.cur_time + QUERY_TIME, EXCHANGE_ROUND, node_id])
 
 
 for i in range(100,0, -1):
