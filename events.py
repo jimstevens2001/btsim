@@ -56,9 +56,35 @@ def exchange_round(event):
 	nodes[node_id].update_unchoke();
 
 	# let peers know that they're being uploaded to and how much
+	up_rate = nodes[node_id].max_up / 5
+	for i in len(nodes[node_id].unchoked):
+		nodes[node_id].unchoked[i].curr_down[node_id] = up_rate
+		nodes[node_id].curr_up[i] = up_rate		
 	
 	# compute completed pieces
+	for i in len(nodes[node_id].unchoked):
+		# choose a random piece to upload
+		piece = random.choice(nodes[i].want_pieces)
+		piece_index = nodes[i].want_pieces.index(piece)
 
+		# if its small enough to get in one round then remove it from the want list
+		# and add it to the have list
+		transfer_rate =  min(nodes[i].remain_down, up_rate)
+		if piece < (transfer_rate*ROUND_TIME):
+			# *BIG QUESTION* does download bandwidth get split between downloads?
+			nodes[i].remain_down =  nodes[i].remain_down - (piece / ROUND_TIME);
+			nodes[i].want_pieces.remove(piece)
+			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
+			nodes[i].have_pieces[piece_index] = piece
+		# otherwise subtract the amount that we can get from the piece size and leave
+		# it in the want list
+		else:
+			nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*ROUND_TIME)
+			nodes[i].remain_down = max(0, (nodes[i].remain_down - transer_rate))
+	
+	# check again to see anyone can do a second piece
+	# not quite sure how to do this yet
+		
 	# Schedule the next update_peers event.
 	wq.enqueue([wq.cur_time + QUERY_TIME, 'EXCHANGE_ROUND', node_id])
 

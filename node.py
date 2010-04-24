@@ -16,16 +16,17 @@ class Node:
 		self.desired_peers = random.randint(self.min_peers, self.max_peers)
 		self.op_unchoke = 0 # will be id of current optomistically unchoked peer
 		self.unchoke_count = 0 # number of times we've tried to unchoke this peer, try 3 times then switch
+		self.max_up = 100 # Default upload capacity
+		self.max_down = 100 # Default download capacity
+		self.remain_down = 100 # Download capacity not being used yet
 		self.curr_up = [] # Values to keep track of current upload resources being spent, indexed by node id
 		self.curr_down = [] # Values to keep track of current download resources being spent, indexed by node id
+		self.want_pieces = [] # Blocks node is interested in, the next ones it'll download.
+		self.cur_pieces = [] # Current blocks held by the node, indexed by block number, contains 
 
 		# don't care about any of thie for now
 		#=================================================
-		# self.cur_blocks = [] # Current blocks held by the node.
-		# self.want_blocks = [] # Blocks node is interested in.
 		# self.gossip = [] # Recent gossip messages recieved (to be passed on when possible) - not sure about this
-		# self.max_up = 100 # Default maximum upload speed
-		# self.max_down = 100 # Default maximum download speed
 		# self.altruism = leave # Current altruism setting
 		#=================================================
 

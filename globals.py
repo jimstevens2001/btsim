@@ -4,6 +4,7 @@ from work_queue import WorkQueue
 MIN_PEERS = 5
 MAX_PEERS = 15
 QUERY_TIME = 100
+ROUND_TIME = 10
 
 # Create the main event queue.
 wq = WorkQueue()
