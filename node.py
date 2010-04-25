@@ -24,7 +24,7 @@ class Node:
 		self.want_pieces = {} # Blocks node is interested in, the next ones it'll download.
 		# Set the contents of want to reflect the number and size of the pieces of this file
 		for i in range(0, NUM_PIECES, 1):
-			self.want_pieces[1] = PIECE_SIZE
+			self.want_pieces[i] = PIECE_SIZE
 		self.have_pieces = {} # Current blocks held by the node, indexed by block number, contains 
 
 		# don't care about any of thie for now
