@@ -118,8 +118,11 @@ class Node:
 			self.unchoked[unchoke_list[3][1]] = unchoke_list[3][0]
 		else:
 			# we have so few peers that we make all of them unchoked
+			del_list = []
 			for i in self.peers:
 				self.unchoked[i] = self.peers[i]
+				del_list.append(i)
+			for i in del_list:
 				del self.peers[i]
 		
 		#take care of the optimistic unchoke
