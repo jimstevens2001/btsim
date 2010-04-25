@@ -1,4 +1,4 @@
-import random
+impor trandom
 
 from globals import *
 
@@ -22,7 +22,7 @@ class Node:
 		self.curr_up = [] # Values to keep track of current upload resources being spent, indexed by node id
 		self.curr_down = [] # Values to keep track of current download resources being spent, indexed by node id
 		self.want_pieces = [] # Blocks node is interested in, the next ones it'll download.
-		self.cur_pieces = [] # Current blocks held by the node, indexed by block number, contains 
+		self.have_pieces = [] # Current blocks held by the node, indexed by block number, contains 
 
 		# don't care about any of thie for now
 		#=================================================
