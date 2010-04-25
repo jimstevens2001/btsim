@@ -64,7 +64,7 @@ def exchange_round(event):
 	# let peers know that they're being uploaded to and how much
 	up_rate = nodes[node_id].max_up / 5
 	for i in nodes[node_id].unchoked:
-		nodes[node_id].unchoked[i].curr_down[node_id] = up_rate
+		nodes[i].curr_down[node_id] = up_rate
 		nodes[node_id].curr_up[i] = up_rate		
 	
 	# compute completed pieces
