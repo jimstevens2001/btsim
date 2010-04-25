@@ -35,6 +35,20 @@ class WorkQueue:
 		# Insert event
 		self.wq.append(event)
 		self.sorted = False
+	
+	def remove(self, node_id):
+		# Make sure the queue is not empty.
+		if self.empty():
+			# Throw exception
+			raise WorkQueueException('WorkQueue.empty() called with empty queue')
+
+		# Search the queue for events for this node_id
+		for i in self.wq:
+			# check to make sure the event is big enough to be an update event
+			if(len(i) > 2):
+				if(i[2] == node_id):
+					temp_index = self.wq.index(i)
+					del self.wq[temp_index]
 
 		
 

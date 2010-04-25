@@ -5,10 +5,10 @@ from globals import *
 
 
 # Initialize the work queue with ADD_NODE operations.
-for i in range(100,0, -1):
+for i in range(10,0, -1):
 	x = random.randint(0, 100) + i
 	wq.enqueue([x, 'ADD_NODE', i])
-wq.enqueue([180, 'REMOVE_NODE', 50])
+	wq.enqueue([x+50, 'REMOVE_NODE', i])
 wq.enqueue([200, 'KILL_SIM'])
 
 

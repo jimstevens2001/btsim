@@ -35,13 +35,16 @@ def remove_node(event):
 	node_id = event[2]
 
 	# remove the node from all the peer and unchoked lists of the other nodes
-	for i in len(nodes):
+	for i in nodes:
 		nodes[i].remove_peer(node_id)
+
+	# find all events for this node and remove them from the work queue
+	wq.remove(node_id)
 	
 	# will need to cancel any pieces that we had expect to be downloaded from this node 
 	
 	# remove the node from the node list
-	nodes.remove(node_id)
+	del nodes[node_id]
 	print 'Looks like we got through the remove_node event, the node removed was ',node_id 
 
 # Use this to update each peers download and upload rates per round and to decide 

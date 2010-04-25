@@ -37,18 +37,20 @@ class Node:
 	def remove_peer(self, node_id):
 		done = 0
 		for i in range(len(self.peers)):
-			if self.peers[i].node_id == node_id:
+			if self.peers[i] == node_id:
 				self.peers.remove(node_id)
 				self.desired_peers = self.desired_peers+1
 				done = 1
 				break
 		if done == 0:
 			for i in range(len(self.unchoked)):
-				if self.unchoked[i].node_id == node_id:
+				if self.unchoked[i] == node_id:
 					self.unchoked.remove(node_id)
 					self.desired_peers = self.desired_peers+1
 					done = 1
 					break
+
+		print 'Done status was ',done
 
 	def get_peers(self):
 		# Get a list of all the nodes that we are not peers with.
