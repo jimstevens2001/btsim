@@ -74,9 +74,8 @@ def exchange_round(event):
 			# zero the recent piece field, it shouldn't matter between rounds
 			nodes[i].recent_piece = 0
 			# choose a random piece to upload
-			piece = random.choice(nodes[i].want_pieces)
-			print 'the piece value that we get out is ', piece
-			piece_index = nodes[i].want_pieces.index(piece)
+			piece_index = random.choice(nodes[i].want_pieces.keys())
+			piece = nodes[i].want_pieces[piece_index]
 
 			# if its small enough to get in one round then remove it from the want list
 			# and add it to the have list
@@ -84,7 +83,7 @@ def exchange_round(event):
 			if piece < (transfer_rate*exchange_time):
 				# *BIG QUESTION* does download bandwidth get split between downloads?
 				nodes[i].remain_down =  nodes[i].remain_down - (piece/exchange_time)
-				nodes[i].want_pieces.remove(piece)
+				del nodes[i].want_pieces[piece_index]
 				# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 				finish_time = piece/transfer_rate # this should come out in seconds
 				nodes[i].have_pieces[piece_index] = finish_time
@@ -93,7 +92,7 @@ def exchange_round(event):
 			# it in the want list
 			else:
 				nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*exchange_time)
-				nodes[i].remain_down = max(0, (nodes[i].remain_down - transer_rate))
+				nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
 				exchange_time = 0
 
 		

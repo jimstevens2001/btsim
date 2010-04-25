@@ -98,8 +98,11 @@ class Node:
 	# there might be a much simpler way to do this, I was really tired when I wrote it
 	def update_unchoke(self, time):
 		# first clear the set of unchoked peers
+		del_list1 = []
 		for i in self.unchoked:
 			self.peers[i] = self.unchoked[i]
+			del_list1.append(i)
+		for i in del_list1:
 			del self.unchoked[i]
 
 		if len(self.peers) >= 4:
@@ -121,11 +124,11 @@ class Node:
 			self.unchoked[unchoke_list[3][1]] = unchoke_list[3][0]
 		else:
 			# we have so few peers that we make all of them unchoked
-			del_list = []
+			del_list2 = []
 			for i in self.peers:
 				self.unchoked[i] = self.peers[i]
-				del_list.append(i)
-			for i in del_list:
+				del_list2.append(i)
+			for i in del_list2:
 				del self.peers[i]
 		
 		#take care of the optimistic unchoke
