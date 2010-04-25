@@ -138,5 +138,5 @@ handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 #handlers['NEXT_DL'] = next_dl 			# used to schedule additional piece downloads on fast peers
 handlers['KILL_SIM'] = kill_sim			# No param
-handlers['LOG'] = log			# No param
+handlers['LOG'] = log				# Param: log type
 
