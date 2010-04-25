@@ -75,6 +75,7 @@ def exchange_round(event):
 			nodes[i].recent_piece = 0
 			# choose a random piece to upload
 			piece = random.choice(nodes[i].want_pieces)
+			print 'the piece value that we get out is ', piece
 			piece_index = nodes[i].want_pieces.index(piece)
 
 			# if its small enough to get in one round then remove it from the want list
