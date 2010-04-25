@@ -1,4 +1,4 @@
-impor trandom
+import random
 
 from globals import *
 
@@ -86,7 +86,7 @@ class Node:
 				        #print nodes
 				        #print node_id,'and',new_peer,'are now peers'
 					nodes[new_peer].add_peer(self.id, time)
-					self.add_peer(new_peerm, time)
+					self.add_peer(new_peer, time)
 					done = True
 
 	
@@ -94,15 +94,15 @@ class Node:
 	# there might be a much simpler way to do this, I was really tired when I wrote it
 	def update_unchoke(self, time):
 		#first clear the set of unchoked peers
-		for i in unchoked:
+		for i in self.unchoked:
 			self.peers[i] = self.unchoked[i]
 			del self.unchoked[i]
 
 		#find the top four uploaders among your peers
 		first = second = third = fourth = 0
 		ind1 = ind2 = ind3 = ind4 = 0
-		for i in curr_down:
-			if(curr_down[i] > first):
+		for i in self.curr_down:
+			if(self.curr_down[i] > first):
 				fourth = third
 				ind4 = ind3
 				third = second
@@ -111,19 +111,19 @@ class Node:
 				ind2 = ind1
 				first = curr_down[i]
 				ind1 = i
-			elif(curr_down[i] > second):
+			elif(self.curr_down[i] > second):
 				fourth = third
 				ind4 = ind3
 				third = second
 				ind3 = ind2
 				second = curr_down[i]
 				ind2 = i
-			elif(curr_down[i] > third):
+			elif(self.curr_down[i] > third):
 				fourth = third
 				ind4 = ind3
 				third = curr_down[i]
 				ind3 = i
-			elif(curr_down[i] > fourth):
+			elif(self.curr_down[i] > fourth):
 				fourth = curr_down[i]
 				ind4 = i
 
