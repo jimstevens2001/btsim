@@ -106,13 +106,13 @@ class Node:
 				
 			unchoke_list.sort();
 			unchoke_list.reverse();
-			unchoke_list = temp_list[0:3]
+			unchoke_list = unchoke_list[0:3]
 
 			# update unchoked set with the new top four peers
-			self.unchoked[temp_list[0][1]] = temp_list[0][0]
-			self.unchoked[temp_list[1][1]] = temp_list[1][0]
-			self.unchoked[temp_list[2][1]] = temp_list[2][0]
-			self.unchoked[temp_list[3][1]] = temp_list[3][0]
+			self.unchoked[unchoke_list[0][1]] = unchoke_list[0][0]
+			self.unchoked[unchoke_list[1][1]] = unchoke_list[1][0]
+			self.unchoked[unchoke_list[2][1]] = unchoke_list[2][0]
+			self.unchoked[unchoke_list[3][1]] = unchoke_list[3][0]
 		else:
 			# we have so few peers that we make all of them unchoked
 			for i in self.peers:
