@@ -8,6 +8,7 @@ from globals import *
 for i in range(100,0, -1):
 	x = random.randint(0, 100) + i
 	wq.enqueue([x, 'ADD_NODE', i])
+wq.enqueue([180, 'REMOVE_NODE', 50])
 wq.enqueue([200, 'KILL_SIM'])
 
 
