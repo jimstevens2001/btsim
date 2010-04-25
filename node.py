@@ -93,45 +93,31 @@ class Node:
 	# unchoking process
 	# there might be a much simpler way to do this, I was really tired when I wrote it
 	def update_unchoke(self, time):
-		#first clear the set of unchoked peers
+		# first clear the set of unchoked peers
 		for i in self.unchoked:
 			self.peers[i] = self.unchoked[i]
 			del self.unchoked[i]
 
-		#find the top four uploaders among your peers
-		first = second = third = fourth = 0
-		ind1 = ind2 = ind3 = ind4 = 0
-		for i in self.curr_down:
-			if(self.curr_down[i] > first):
-				fourth = third
-				ind4 = ind3
-				third = second
-				ind3 = ind2
-				second = first
-				ind2 = ind1
-				first = curr_down[i]
-				ind1 = i
-			elif(self.curr_down[i] > second):
-				fourth = third
-				ind4 = ind3
-				third = second
-				ind3 = ind2
-				second = curr_down[i]
-				ind2 = i
-			elif(self.curr_down[i] > third):
-				fourth = third
-				ind4 = ind3
-				third = curr_down[i]
-				ind3 = i
-			elif(self.curr_down[i] > fourth):
-				fourth = curr_down[i]
-				ind4 = i
+		if len(self.peers) < 4:
+		        # find the top four uploaders among your peers
+			unchoke_list = []
+			for i in self.curr_down:
+				unchoke_list.append([self.curr_down[i], i])
+				
+			unchoke_list.sort();
+			unchoke_list.reverse();
+			unchoke_list = temp_list[0:3]
 
-		#update unchoked set with the new top four peers
-		self.unchoked[ind1] = first
-		self.unchoked[ind2] = second
-		self.unchoked[ind3] = third
-		self.unchoked[ind4] = fourth
+			# update unchoked set with the new top four peers
+			self.unchoked[temp_list[0][1]] = temp_list[0][0]
+			self.unchoked[temp_list[1][1]] = temp_list[1][0]
+			self.unchoked[temp_list[2][1]] = temp_list[2][0]
+			self.unchoked[temp_list[3][1]] = temp_list[3][0]
+		else:
+			# we have so few peers that we make all of them unchoked
+			for i in self.peers:
+				self.unchoked[i] = self.peers[i]
+				del self.peers[i]
 		
 		#take care of the optimistic unchoke
 		self.update_op_unchoke()
@@ -140,62 +126,71 @@ class Node:
 	# I guess this could've just been included in the unchoking process
 	# this should get called every 10 seconds
 	def update_op_unchoke(self):	
-		if self.op_unchoke == 0: # first time we're here
-			# Copy the peers dictionary into an inverted dictionary
-			temp_dict = {}
-			for i in self.peers:
-				temp_dict[self.peers[i]] = i
+		if len(self.peers) > 0: 
+			if self.op_unchoke == 0: # first time we're here
+				# Create a new list of the keys of the peers list
+				op_unchoke_list = []
 
-			temp_list = temp_dict.keys()
-			temp_list.sort()
+				for i in self.peers:
+					op_unchoke_list.append([self.peers[i], i])
 
-			newest_key = temp_list.pop() # this should be the largest number in the list
-			newerer_key = temp_list.pop()
-			newer_key = temp_list.pop()
+				op_unchoke_list.sort()
+				op_unchoke_list.reverse()
 
-			temp_dict[newest_key+1] = temp_dict[newest_key]
-			temp_dict[newest_key+2] = temp_dict[newest_key]
-			temp_dict[newest_key+3] = temp_dict[newerer_key]
-			temp_dict[newest_key+4] = temp_dict[newerer_key]
-			temp_dict[newest_key+5] = temp_dict[newer_key]
-			temp_dict[newest_key+6] = temp_dict[newer_key]
+				newest = op_unchoke_list[2]
+				newerer = op_unchoke_list[1]
+				newer = op_unchoke_list[0]
+
+				op_unchoke_list.append(newest)
+				op_unchoke_list.append(newest)
+				op_unchoke_list.append(newerer)
+				op_unchoke_list.append(newerer)
+				op_unchoke_list.append(newer)
+				op_unchoke_list.append(newer)
 					
-			self.op_unchoke = random.choice(temp_dict) # should be a node_id		
+				temp = random.choice(op_unchoke_list)	
+
+				self.op_unchoke = temp[1] # should be a node_id
 					
-			self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
-			del self.peers[self.op_unchoke]
-			self.unchoke_count = 1
-		elif self.unchoke_count < 4:
-			self.unchoke_count = self.unchoke_count + 1
-		else:
-			self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
-			del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
+				self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
+				del self.peers[self.op_unchoke]
+				self.unchoke_count = 1
+			elif self.unchoke_count < 4:
+				self.unchoke_count = self.unchoke_count + 1
+			else:
+				self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
+				del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
 			                                      # one of the four unchoked peers this round
+
+				# Create a new list of the keys of the peers list
+				op_unchoke_list = []
+
+				for i in self.peers:
+					op_unchoke_list.append([self.peers[i], i])
+
+				op_unchoke_list.sort()
+				op_unchoke_list.reverse()
+
+				newest = op_unchoke_list[2]
+				newerer = op_unchoke_list[1]
+				newer = op_unchoke_list[0]
+
+				op_unchoke_list.append(newest)
+				op_unchoke_list.append(newest)
+				op_unchoke_list.append(newerer)
+				op_unchoke_list.append(newerer)
+				op_unchoke_list.append(newer)
+				op_unchoke_list.append(newer)
+					
+				temp = random.choice(op_unchoke_list)	
+
+				self.op_unchoke = temp[1] # should be a node_id
+					
+				self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
+				del self.peers[self.op_unchoke]
+				self.unchoke_count = 1
 			
-			# Copy the peers dictionary into an inverted dictionary
-			temp_dict = {}
-			for i in self.peers:
-				temp_dict[self.peers[i]] = i
-
-			temp_list = temp_dict.keys()
-			temp_list.sort()
-
-			newest_key = temp_list.pop() # this should be the largest number in the list
-			newerer_key = temp_list.pop()
-			newer_key = temp_list.pop()
-
-			temp_dict[newest_key+1] = temp_dict[newest_key]
-			temp_dict[newest_key+2] = temp_dict[newest_key]
-			temp_dict[newest_key+3] = temp_dict[newerer_key]
-			temp_dict[newest_key+4] = temp_dict[newerer_key]
-			temp_dict[newest_key+5] = temp_dict[newer_key]
-			temp_dict[newest_key+6] = temp_dict[newer_key]
-					
-			self.op_unchoke = random.choice(temp_dict) # should be a node_id		
-					
-			self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
-			del self.peers[self.op_unchoke]
-			self.unchoke_count = 1
+			
 			
 			
 			
