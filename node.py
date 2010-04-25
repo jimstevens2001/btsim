@@ -44,19 +44,26 @@ class Node:
 			del self.peers[node_id]
 			self.desired_peers = self.desired_peers+1
 			done = 1
-		if done == 0:
-			if node_id in self.unchoked:
-				del self.unchoked[node_id]
-				self.desired_peers = self.desired_peers+1
-				done = 1
+		
+		if node_id in self.unchoked:
+			del self.unchoked[node_id]
+			self.desired_peers = self.desired_peers+1
+			if self.op_unchoke == node_id:
+				self.unchoke_count = 0
+			done = 2
+				
+		# also need to check the curr_up and curr_down dictionaries for this peer
+		if node_id in self.curr_up:
+			del self.curr_up[node_id]
 
-		print 'Done status was ',done
+		if node_id in self.curr_down:
+			del self.curr_down[node_id]
 
 	def get_peers(self, time):
 		# Get a list of all the nodes that we are not peers with.
 		all_nodes = nodes.keys()
 		all_nodes.remove(self.id)
-		[all_nodes.remove(i) for i in self.peers]
+		#[all_nodes.remove(i) for i in self.peers]
 
 		# Randomly decide how many peers we desire right now.
 
@@ -98,6 +105,7 @@ class Node:
 	# there might be a much simpler way to do this, I was really tired when I wrote it
 	def update_unchoke(self, time):
 		# first clear the set of unchoked peers
+		# except for the op_unchoke
 		del_list1 = []
 		for i in self.unchoked:
 			self.peers[i] = self.unchoked[i]
@@ -105,7 +113,7 @@ class Node:
 		for i in del_list1:
 			del self.unchoked[i]
 
-		if len(self.peers) >= 4:
+		if len(self.curr_down) >= 4:
 		        # find the top four uploaders among your peers
 			unchoke_list = []
 			for i in self.curr_down:
@@ -114,14 +122,16 @@ class Node:
 			unchoke_list.sort();
 			unchoke_list.reverse();
 			unchoke_list = unchoke_list[0:4]
-			
-			print 'the size of the unchoke_list is ',len(unchoke_list)
 
 			# update unchoked set with the new top four peers
 			self.unchoked[unchoke_list[0][1]] = unchoke_list[0][0]
+			del self.peers[unchoke_list[0][1]]
 			self.unchoked[unchoke_list[1][1]] = unchoke_list[1][0]
+			del self.peers[unchoke_list[1][1]]
 			self.unchoked[unchoke_list[2][1]] = unchoke_list[2][0]
+			del self.peers[unchoke_list[2][1]]
 			self.unchoked[unchoke_list[3][1]] = unchoke_list[3][0]
+			del self.peers[unchoke_list[3][1]]
 		else:
 			# we have so few peers that we make all of them unchoked
 			del_list2 = []
@@ -130,8 +140,19 @@ class Node:
 				del_list2.append(i)
 			for i in del_list2:
 				del self.peers[i]
+
+		# see if the op_unchoke got picked
+		for i in self.unchoked:
+			if i == self.op_unchoke:
+				# if it was picked, reset the op_unchoke
+				self.unchoke_count = 0
+
+		# if it wasn't picked, put it back into unchoked
+		if self.unchoke_count != 0:
+			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
+			del self.peers[self.op_unchoke]
 		
-		#take care of the optimistic unchoke
+		# take care of the optimistic unchoke
 		self.update_op_unchoke()
 
 
@@ -139,7 +160,7 @@ class Node:
 	# this should get called every 10 seconds
 	def update_op_unchoke(self):	
 		if len(self.peers) > 0: 
-			if self.op_unchoke == 0: # first time we're here
+			if self.unchoke_count == 0: # first time we're here or old op_unchoke was removed
 				# Create a new list of the keys of the peers list
 				op_unchoke_list = []
 
@@ -149,29 +170,43 @@ class Node:
 				op_unchoke_list.sort()
 				op_unchoke_list.reverse()
 
-				newest = op_unchoke_list[2]
-				newerer = op_unchoke_list[1]
-				newer = op_unchoke_list[0]
+				if len(self.peers) >= 3:
+					newest = op_unchoke_list[0]
+					newerer = op_unchoke_list[1]
+					newer = op_unchoke_list[2]
 
-				op_unchoke_list.append(newest)
-				op_unchoke_list.append(newest)
-				op_unchoke_list.append(newerer)
-				op_unchoke_list.append(newerer)
-				op_unchoke_list.append(newer)
-				op_unchoke_list.append(newer)
+					op_unchoke_list.append(newest)
+					op_unchoke_list.append(newest)
+					op_unchoke_list.append(newerer)
+					op_unchoke_list.append(newerer)
+					op_unchoke_list.append(newer)
+					op_unchoke_list.append(newer)
+				elif len(self.peers) == 2:
+					newest = op_unchoke_list[0]
+					newerer = op_unchoke_list[1]
+					
+					op_unchoke_list.append(newest)
+					op_unchoke_list.append(newest)
+					op_unchoke_list.append(newerer)
+					op_unchoke_list.append(newerer)
+				elif len(self.peers) == 1:
+					newest = op_unchoke_list[0]
+
+					op_unchoke_list.append(newest)
+					op_unchoke_list.append(newest)
 					
 				temp = random.choice(op_unchoke_list)	
 
 				self.op_unchoke = temp[1] # should be a node_id
-					
+
 				self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
+				
 				del self.peers[self.op_unchoke]
-				self.unchoke_count = 1
+				self.unchoke_count = 1				
+				
 			elif self.unchoke_count < 4:
 				self.unchoke_count = self.unchoke_count + 1
 			else:
-				print 'the op_unchoke value is ', self.op_unchoke
-				print 'the size of unchoked is ', len(self.unchoked)
 				self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
 				del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
 			                                      # one of the four unchoked peers this round
@@ -199,8 +234,9 @@ class Node:
 				temp = random.choice(op_unchoke_list)	
 
 				self.op_unchoke = temp[1] # should be a node_id
-					
+									
 				self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
+
 				del self.peers[self.op_unchoke]
 				self.unchoke_count = 1
 			

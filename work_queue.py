@@ -55,8 +55,7 @@ class WorkQueue:
 			# check to make sure the event is big enough to be an update event
 			if(len(i) > 2):
 				if(i[2] == node_id):
-					temp_index = self.wq.index(i)
-					del self.wq[temp_index]
+					self.wq.remove(i)
 
 		
 

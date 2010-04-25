@@ -94,10 +94,9 @@ def exchange_round(event):
 				nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*exchange_time)
 				nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
 				exchange_time = 0
-
 		
-			# Schedule the next update_peers event.
-			wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
+	# Schedule the next update_peers event.
+	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 
 def kill_sim(event):
