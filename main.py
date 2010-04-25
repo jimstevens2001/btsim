@@ -10,6 +10,7 @@ for i in range(10,0, -1):
 	wq.enqueue([x, 'ADD_NODE', i])
 	wq.enqueue([x+50, 'REMOVE_NODE', i])
 wq.enqueue([200, 'KILL_SIM'])
+wq.enqueue([100, 'LOG', 'wq'])
 
 
 # Main queue loop

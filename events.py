@@ -8,6 +8,8 @@ from globals import *
 # Time must be non-negative integer.
 # Type must be a string and is used to call event handler function.
 
+class EventException(Exception): pass
+
 
 # Define event Handlers
 
@@ -95,8 +97,35 @@ def exchange_round(event):
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	print wq.wq
+	print wq.get_queue()
 	sys.exit(0)
+
+
+def log(event):
+	time = event[0]
+	log_type = event[2]
+	if log_type == 'time':
+		print 'LOG Time=',time
+	elif log_type == 'wq':
+		print 'LOG Time=',time
+		print 'Work Queue ='
+		print wq.get_queue()
+	elif log_type == 'nodes':
+		print 'LOG Time=',time
+		print 'Nodes ='
+		print nodes.keys()
+	elif log_type == 'peers':
+		print 'LOG Time=',time
+		print 'Peers ='
+		peers = {}
+		for i in nodes:
+			peers[i] = nodes[i].peers
+		print peers
+	elif log_type == 'node_state':
+		for i in nodes:
+			print i,':',nodes[i].__dict__
+	else:
+		raise EventException('Invalid log_type')
 	
 
 
@@ -109,4 +138,5 @@ handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 #handlers['NEXT_DL'] = next_dl 			# used to schedule additional piece downloads on fast peers
 handlers['KILL_SIM'] = kill_sim			# No param
+handlers['LOG'] = log			# No param
 
