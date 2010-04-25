@@ -33,6 +33,7 @@ class Node:
 	def add_peer(self, node_id, time):
 		self.desired_peers = self.desired_peers-1 # right now we don't need this
 		self.peers[node_id] = time
+		self.curr_down[node_id] = 0
 
 	def remove_peer(self, node_id):
 		done = 0
@@ -98,7 +99,7 @@ class Node:
 			self.peers[i] = self.unchoked[i]
 			del self.unchoked[i]
 
-		if len(self.peers) < 4:
+		if len(self.peers) >= 4:
 		        # find the top four uploaders among your peers
 			unchoke_list = []
 			for i in self.curr_down:
@@ -107,6 +108,8 @@ class Node:
 			unchoke_list.sort();
 			unchoke_list.reverse();
 			unchoke_list = unchoke_list[0:3]
+			
+			print 'the size of the unchoke_list is ',len(unchoke_list)
 
 			# update unchoked set with the new top four peers
 			self.unchoked[unchoke_list[0][1]] = unchoke_list[0][0]
