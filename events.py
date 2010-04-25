@@ -42,6 +42,7 @@ def remove_node(event):
 	
 	# remove the node from the node list
 	nodes.remove(node_id)
+	print 'Looks like we got through the remove_node event, the node removed was ',node_id 
 
 # Use this to update each peers download and upload rates per round and to decide 
 # also includes the unchoke algorithm at the beginning
