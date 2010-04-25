@@ -113,7 +113,7 @@ class Node:
 				
 			unchoke_list.sort();
 			unchoke_list.reverse();
-			unchoke_list = unchoke_list[0:3]
+			unchoke_list = unchoke_list[0:4]
 			
 			print 'the size of the unchoke_list is ',len(unchoke_list)
 
@@ -164,7 +164,7 @@ class Node:
 
 				self.op_unchoke = temp[1] # should be a node_id
 					
-				self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
+				self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
 				del self.peers[self.op_unchoke]
 				self.unchoke_count = 1
 			elif self.unchoke_count < 4:
@@ -198,7 +198,7 @@ class Node:
 
 				self.op_unchoke = temp[1] # should be a node_id
 					
-				self.unchoked[self.op_unchoke] = peers[self.op_unchoke]
+				self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
 				del self.peers[self.op_unchoke]
 				self.unchoke_count = 1
 			
