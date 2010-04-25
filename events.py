@@ -20,14 +20,14 @@ def add_node(event):
 	nodes[node_id] = Node(node_id)
 
 	# Get peers for it.
-	nodes[node_id].get_peers()
+	nodes[node_id].get_peers(event[0])
 
 	# Schedule the first update_peers event.
-	wq.enqueue([wq.cur_time + QUERY_TIME, 'UPDATE_PEERS', node_id])
+	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def update_peers(event):
 	node_id = event[2]
-	nodes[node_id].get_peers()
+	nodes[node_id].get_peers(event[0])
 
 	# Schedule the next update_peers event.
 	wq.enqueue([wq.cur_time + QUERY_TIME, 'UPDATE_PEERS', node_id])
@@ -38,7 +38,7 @@ def remove_node(event):
 
 	# remove the node from all the peer and unchoked lists of the other nodes
 	for i in nodes:
-		nodes[i].remove_peer(node_id)
+		nodes[i].remove_peer(node_id, event[0])
 
 	# find all events for this node and remove them from the work queue
 	wq.remove(node_id)
@@ -56,19 +56,19 @@ def exchange_round(event):
 
 	# if we need more peers, get them
 	if (len(nodes[node_id].peers)+len(nodes[node_id].unchoked)) < nodes[node_id].desired_peers:
-		nodes[node_id].get_peers()
+		nodes[node_id].get_peers(event[0])
 
 	# run the unchoke algorithm
-	nodes[node_id].update_unchoke();
+	nodes[node_id].update_unchoke(event[0]);
 
 	# let peers know that they're being uploaded to and how much
 	up_rate = nodes[node_id].max_up / 5
-	for i in len(nodes[node_id].unchoked):
+	for i in nodes[node_id].unchoked:
 		nodes[node_id].unchoked[i].curr_down[node_id] = up_rate
 		nodes[node_id].curr_up[i] = up_rate		
 	
 	# compute completed pieces
-	for i in len(nodes[node_id].unchoked):
+	for i in nodes[node_id].unchoked:
 		exchange_time = ROUND_TIME
 		while exchange_time != 0:
 			# zero the recent piece field, it shouldn't matter between rounds
