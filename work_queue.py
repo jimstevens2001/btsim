@@ -6,8 +6,20 @@ class WorkQueue:
 		self.cur_time = 0 # Current simulation time
 		self.sorted = True # Keep track of if queue is sorted
 
+	def get_queue(self):
+		self.sort()
+		return self.wq
+
 	def empty(self):
 		return (self.wq == [])
+
+	def sort(self):
+		# Sort the queue if necessary.
+		# The sort is done right before a dequeue so we don't run it very often.
+		if not self.sorted:
+			self.wq.sort()
+			self.sorted = True
+		
 
 	def dequeue(self):
 		# Make sure the queue is not empty.
@@ -15,11 +27,7 @@ class WorkQueue:
 			# Throw exception
 			raise WorkQueueException('WorkQueue.empty() called with empty queue')
 
-		# Sort the queue if necessary.
-		# The sort is done right before a dequeue so we don't run it very often.
-		if not self.sorted:
-			self.wq.sort()
-			self.sorted = True
+		self.sort()
 
 		# Get the event and set the current time.
 		next_event = self.wq.pop(0)
