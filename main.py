@@ -8,9 +8,9 @@ from globals import *
 for i in range(10,0, -1):
 	x = random.randint(0, 100) + i
 	wq.enqueue([x, 'ADD_NODE', i])
-	wq.enqueue([x+50, 'REMOVE_NODE', i])
+	#wq.enqueue([x+50, 'REMOVE_NODE', i])
         wq.enqueue([x+25, 'LOG', 'file_progress', i])
-wq.enqueue([200, 'KILL_SIM'])
+wq.enqueue([700, 'KILL_SIM'])
 wq.enqueue([100, 'LOG', 'wq'])
 
 
