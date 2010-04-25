@@ -170,6 +170,8 @@ class Node:
 			elif self.unchoke_count < 4:
 				self.unchoke_count = self.unchoke_count + 1
 			else:
+				print 'the op_unchoke value is ', self.op_unchoke
+				print 'the size of unchoked is ', len(self.unchoked)
 				self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
 				del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
 			                                      # one of the four unchoked peers this round

@@ -38,7 +38,7 @@ def remove_node(event):
 
 	# remove the node from all the peer and unchoked lists of the other nodes
 	for i in nodes:
-		nodes[i].remove_peer(node_id, event[0])
+		nodes[i].remove_peer(node_id)
 
 	# find all events for this node and remove them from the work queue
 	wq.remove(node_id)
