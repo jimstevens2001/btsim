@@ -86,7 +86,7 @@ def exchange_round(event):
 				del nodes[i].want_pieces[piece_index]
 				# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 				finish_time = piece/transfer_rate # this should come out in seconds
-				nodes[i].have_pieces[piece_index] = finish_time
+				nodes[i].have_pieces[piece_index] = finish_time + event[0]
 				exchange_time = exchange_time - finish_time
 			# otherwise subtract the amount that we can get from the piece size and leave
 			# it in the want list
@@ -125,6 +125,12 @@ def log(event):
 		for i in nodes:
 			peers[i] = nodes[i].peers
 		print peers
+	elif log_type == 'file_progress':
+		node_id = event[3]
+		print 'LOG Time=',time
+		print 'Node ',node_id,'s File Progress:'
+		for i in nodes[node_id].have_pieces:
+			print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
 	elif log_type == 'node_state':
 		for i in nodes:
 			print i,':',nodes[i].__dict__

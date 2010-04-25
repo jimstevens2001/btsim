@@ -25,7 +25,7 @@ class Node:
 		# Set the contents of want to reflect the number and size of the pieces of this file
 		for i in range(0, NUM_PIECES, 1):
 			self.want_pieces[i] = PIECE_SIZE
-		self.have_pieces = {} # Current blocks held by the node, indexed by block number, contains 
+		self.have_pieces = {} # Current blocks held by the node, indexed by block number, contains time finished
 
 		# don't care about any of thie for now
 		#=================================================
