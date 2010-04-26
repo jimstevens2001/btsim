@@ -137,8 +137,8 @@ def log(event):
 	elif log_type == 'priority_queue':
 		node_id = event[3]
 		print 'LOG Time=',time
-		for i in nodes[node_id].priority_queue:
-			print 'Priece ',nodes[node_id].priority_queue[i],'has priority',i 
+		print 'Priority list for node',node_id,'is'
+		print nodes[node_id].priority_list
 	elif log_type == 'node_state':
 		print 'LOG Time=',time
 		for i in nodes:

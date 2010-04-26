@@ -24,8 +24,6 @@ class Node:
 		self.curr_down = {} # Values to keep track of current download resources being spent, indexed by node id
 		self.want_pieces = {} # Blocks node is interested in, the next ones it'll download.
 		self.priority_list = [] # List of the pieces we want in order of their rarity
-		for i in self.want_pieces:
-			priority_list[i] = 0 # should not have any peers yet, so everything is rare
 				
 		# Set the contents of want to reflect the number and size of the pieces of this file
 		for i in range(0, NUM_PIECES, 1):
@@ -222,14 +220,21 @@ class Node:
 
 	# Sorts the priority list of the node based on rarity
 	def sort_priority(self):
-		# clear the list cause the priority will change between rounds
-		del self.priority_list[:]
+		self.priority_list = [] # clear the list cause the priority will change between rounds
+		count_dict = {}
+		count_list = []
+		all_peers = self.peers.keys() + self.unchoked.keys()
 		for i in self.want_pieces:
-			count = 0
-			for j in self.peers:
-				if i in nodes[self.peers[j]].have_pieces:
-					count = count + 1
-			self.priority_list.append([count, i])
-		self.priority_list.sort() # Sort least to greatest so the head is now the most rare pieces
+			for j in all_peers:
+				if i in nodes[j].have_pieces:
+					if i in count_dict:
+						count_dict[i] += 1
+					else:
+						count_dict[i] = 1
+			if i in count_dict:
+				count_list.append([count_dict[i], i])
+
+		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
+		self.priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
 		
 				
