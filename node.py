@@ -170,30 +170,10 @@ class Node:
 				op_unchoke_list.sort()
 				op_unchoke_list.reverse()
 
-				if len(self.peers) >= 3:
-					newest = op_unchoke_list[0]
-					newerer = op_unchoke_list[1]
-					newer = op_unchoke_list[2]
-
-					op_unchoke_list.append(newest)
-					op_unchoke_list.append(newest)
-					op_unchoke_list.append(newerer)
-					op_unchoke_list.append(newerer)
-					op_unchoke_list.append(newer)
-					op_unchoke_list.append(newer)
-				elif len(self.peers) == 2:
-					newest = op_unchoke_list[0]
-					newerer = op_unchoke_list[1]
-					
-					op_unchoke_list.append(newest)
-					op_unchoke_list.append(newest)
-					op_unchoke_list.append(newerer)
-					op_unchoke_list.append(newerer)
-				elif len(self.peers) == 1:
-					newest = op_unchoke_list[0]
-
-					op_unchoke_list.append(newest)
-					op_unchoke_list.append(newest)
+				# Add the newest peers in the op_unchoke_list an extra two times
+				# so they are three times more likely to be picked
+				new_list = op_unchoke_list[0:3]
+				op_unchoke_list += new_list*2
 					
 				temp = random.choice(op_unchoke_list)	
 
