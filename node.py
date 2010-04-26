@@ -105,8 +105,6 @@ class Node:
 					nodes[new_peer].add_peer(self.id, time)
 					self.add_peer(new_peer, time)
 					done = True
-		# generate a new priority_list for our new set of peers
-		self.sort_priority() # since we get new peers each round, this will also update the list each round
 
 	
 	# unchoking process
