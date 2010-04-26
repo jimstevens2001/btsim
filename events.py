@@ -132,6 +132,7 @@ def log(event):
 		for i in nodes[node_id].have_pieces:
 			print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
 	elif log_type == 'node_state':
+		print 'LOG Time=',time
 		for i in nodes:
 			print i,':',nodes[i].__dict__
 	else:
