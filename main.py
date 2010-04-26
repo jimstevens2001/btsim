@@ -13,6 +13,7 @@ start_times.sort()
 for i in range(10):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i])
+	wq.enqueue([x+50, 'LOG', 'priority_queue', i])
 	#wq.enqueue([x+50, 'REMOVE_NODE', i])
 for i in range(20):
         wq.enqueue([10*i, 'LOG', 'node_state'])

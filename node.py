@@ -10,7 +10,8 @@ class Node:
 	def __init__(self, node_id):
 		self.id = node_id
 		self.peers = {} # Current set of peers that are not unchoked.
-		self.unchoked = {} # set of unchoked peers this list should never have more than 5 things in it
+		self.unchoked = {} # Set of unchoked peers this list should never have more than 5 things in it
+		self.interest = {} # Set of peers who are interested in us and their first choice piece
 		self.min_peers = 5
 		self.max_peers = 15
 		self.desired_peers = random.randint(self.min_peers, self.max_peers)
@@ -22,6 +23,10 @@ class Node:
 		self.curr_up = {} # Values to keep track of current upload resources being spent, indexed by node id
 		self.curr_down = {} # Values to keep track of current download resources being spent, indexed by node id
 		self.want_pieces = {} # Blocks node is interested in, the next ones it'll download.
+		self.priority_list = [] # List of the pieces we want in order of their rarity
+		for i in self.want_pieces:
+			priority_list[i] = 0 # should not have any peers yet, so everything is rare
+				
 		# Set the contents of want to reflect the number and size of the pieces of this file
 		for i in range(0, NUM_PIECES, 1):
 			self.want_pieces[i] = PIECE_SIZE
@@ -58,6 +63,8 @@ class Node:
 
 		if node_id in self.curr_down:
 			del self.curr_down[node_id]
+
+		self.sort_priority()
 
 	def get_peers(self, time):
 		# Get a list of all the nodes that we are not peers with.
@@ -100,6 +107,8 @@ class Node:
 					nodes[new_peer].add_peer(self.id, time)
 					self.add_peer(new_peer, time)
 					done = True
+		# generate a new priority_list for our new set of peers
+		self.sort_priority() # since we get new peers each round, this will also update the list each round
 
 	
 	# unchoking process
@@ -210,8 +219,17 @@ class Node:
 
 				del self.peers[self.op_unchoke]
 				self.unchoke_count = 1
-			
-			
-			
-			
-			
+
+	# Sorts the priority list of the node based on rarity
+	def sort_priority(self):
+		# clear the list cause the priority will change between rounds
+		del self.priority_list[:]
+		for i in self.want_pieces:
+			count = 0
+			for j in self.peers:
+				if i in nodes[self.peers[j]].have_pieces:
+					count = count + 1
+			self.priority_list.append([count, i])
+		self.priority_list.sort() # Sort least to greatest so the head is now the most rare pieces
+		
+				

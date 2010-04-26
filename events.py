@@ -134,6 +134,11 @@ def log(event):
 		print 'Node ',node_id,'s File Progress:'
 		for i in nodes[node_id].have_pieces:
 			print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
+	elif log_type == 'priority_queue':
+		node_id = event[3]
+		print 'LOG Time=',time
+		for i in nodes[node_id].priority_queue:
+			print 'Priece ',nodes[node_id].priority_queue[i],'has priority',i 
 	elif log_type == 'node_state':
 		print 'LOG Time=',time
 		for i in nodes:
