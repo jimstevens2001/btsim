@@ -91,6 +91,7 @@ class Node:
 				else:
 					break
 
+				
 				all_nodes.remove(new_peer)
 
 				if len(nodes[new_peer].peers) < nodes[new_peer].max_peers:
@@ -122,16 +123,12 @@ class Node:
 			unchoke_list.sort();
 			unchoke_list.reverse();
 			unchoke_list = unchoke_list[0:4]
-
+			
 			# update unchoked set with the new top four peers
-			self.unchoked[unchoke_list[0][1]] = unchoke_list[0][0]
-			del self.peers[unchoke_list[0][1]]
-			self.unchoked[unchoke_list[1][1]] = unchoke_list[1][0]
-			del self.peers[unchoke_list[1][1]]
-			self.unchoked[unchoke_list[2][1]] = unchoke_list[2][0]
-			del self.peers[unchoke_list[2][1]]
-			self.unchoked[unchoke_list[3][1]] = unchoke_list[3][0]
-			del self.peers[unchoke_list[3][1]]
+			for i in range(4):
+				self.unchoked[unchoke_list[i][1]] = unchoke_list[i][0]
+				del self.peers[unchoke_list[i][1]]
+
 		else:
 			# we have so few peers that we make all of them unchoked
 			del_list2 = []
