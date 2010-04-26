@@ -169,6 +169,7 @@ def finish_piece(event):
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, exchange_time])
 			# otherwise subtract the amount that we can get from the piece size and leave
 			# it in the want list
+			nodes[recieving_node_id].want_pieces[piece_index] = 0
 		else:
 			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*exchange_time)
 			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
