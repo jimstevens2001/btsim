@@ -23,11 +23,7 @@ class Node:
 		self.curr_up = {} # Values to keep track of current upload resources being spent, indexed by node id
 		self.curr_down = {} # Values to keep track of current download resources being spent, indexed by node id
 		self.want_pieces = {} # Blocks node is interested in, the next ones it'll download.
-		self.priority_list = [] # List of the pieces we want in order of their rarity
-				
-		# Set the contents of want to reflect the number and size of the pieces of this file
-		for i in range(0, NUM_PIECES, 1):
-			self.want_pieces[i] = PIECE_SIZE
+		self.priority_list = [] # List of the pieces we want in order of their rarity		
 		self.have_pieces = {} # Current blocks held by the node, indexed by block number, contains time finished
 
 		# don't care about any of thie for now
@@ -223,6 +219,7 @@ class Node:
 		count_list = []
 		all_peers = self.peers.keys() + self.unchoked.keys()
 		for i in self.want_pieces:
+			count_dict[i] = 0
 			for j in all_peers:
 				if i in nodes[j].have_pieces:
 					if i in count_dict:
