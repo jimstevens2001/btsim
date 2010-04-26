@@ -24,6 +24,8 @@ def add_node(event):
 
 	# Schedule the first update_peers event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
+	print 'Added node',node_id,'at',event[0]
+	print
 
 def update_peers(event):
 	node_id = event[2]
@@ -47,7 +49,8 @@ def remove_node(event):
 	
 	# remove the node from the node list
 	del nodes[node_id]
-	print 'Looks like we got through the remove_node event, the node removed was ',node_id 
+	print 'Removed node',node_id,'at',event[0]
+	print
 
 # Use this to update each peers download and upload rates per round and to decide 
 # also includes the unchoke algorithm at the beginning
@@ -137,6 +140,7 @@ def log(event):
 			print i,':',nodes[i].__dict__
 	else:
 		raise EventException('Invalid log_type')
+	print
 	
 
 
