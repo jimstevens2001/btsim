@@ -21,7 +21,9 @@ def add_node(event):
 
 	if len(event) >= 4:
 		have_list = event[3]
-		nodes[node_id].have_pieces = have_list # I hope this works
+		#copy the have list into the have_pieces dictionary
+		for i in range(len(have_list)):
+			nodes[node_id].have_pieces[i] = have_list[i] # I hope this works
 		print nodes[node_id].have_pieces
 
 	for i in range(NUM_PIECES):
@@ -97,24 +99,17 @@ def exchange_round(event):
 		nodes[i].recent_piece = 0
 
 		# choose a random piece to upload
-		# first make of list of everything that we have that they want
-		if node_id == 11:
-			print 'Node 11 have pieces for unchoked are: ',nodes[11].have_pieces
-			print 'Node 11 want pieces for unchoked are: ',nodes[i].want_pieces
+		# first make of list of everything that we have that they want		
 		can_fill = []
-		for j in nodes[i].want_pieces:
+		for j in nodes[i].want_pieces.keys():
 			if nodes[i].want_pieces[j] != 0:
 				if j in nodes[node_id].have_pieces.keys():
 					can_fill.append(j)
-					if node_id == 11:
-						print 'Node 11 can fill is: ',can_fill
 
 		if can_fill != []:	
-			print 'length of can_fill is: ',len(can_fill)
 			temp_index = random.choice(range(len(can_fill)))
 			piece_index = can_fill[temp_index]
 			piece = nodes[i].want_pieces[piece_index]
-			print 'piece index in exchange round for ',i,' was ',piece_index
 
 			# if its small enough to get in one round then add a finish piece event to the work queue
 			transfer_rate =  min(nodes[i].remain_down, up_rate)
@@ -144,19 +139,20 @@ def finish_piece(event):
 	recieving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
-
-	print 'piece id in finish piece for ',recieving_node_id,' was ',piece_id
 	
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
+
+	up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
 	# Now, if there's time, schdule another piece to complete
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want
 	can_fill = []
-	for j in nodes[recieving_node_id].want_pieces:
-		if j in nodes[sending_node_id].have_pieces:
-			can_fill.append(j)
+	for j in nodes[recieving_node_id].want_pieces.keys():
+		if nodes[recieving_node_id].want_pieces[j] != 0:
+			if j in nodes[sending_node_id].have_pieces.keys():
+				can_fill.append(j)
 
 	if can_fill != []:	
 		temp_index = random.choice(range(len(can_fill)))
@@ -177,7 +173,6 @@ def finish_piece(event):
 			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*exchange_time)
 			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
 			exchange_time = 0
-			print 'exchange_time is ',exchange_time
 	
 
 def kill_sim(event):
