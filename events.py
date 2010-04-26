@@ -76,27 +76,36 @@ def exchange_round(event):
 		while exchange_time != 0:
 			# zero the recent piece field, it shouldn't matter between rounds
 			nodes[i].recent_piece = 0
-			# choose a random piece to upload
-			piece_index = random.choice(nodes[i].want_pieces.keys())
-			piece = nodes[i].want_pieces[piece_index]
 
-			# if its small enough to get in one round then remove it from the want list
-			# and add it to the have list
-			transfer_rate =  min(nodes[i].remain_down, up_rate)
-			if piece < (transfer_rate*exchange_time):
-				# *BIG QUESTION* does download bandwidth get split between downloads?
-				nodes[i].remain_down =  nodes[i].remain_down - (piece/exchange_time)
-				del nodes[i].want_pieces[piece_index]
-				# maybe we should store the time the piece is finished in the have list instead of the size of the piece
-				finish_time = piece/transfer_rate # this should come out in seconds
-				nodes[i].have_pieces[piece_index] = finish_time + event[0]
-				exchange_time = exchange_time - finish_time
-			# otherwise subtract the amount that we can get from the piece size and leave
-			# it in the want list
+			# choose a random piece to upload
+			# first make of list of everything that we have that they want
+			can_fill = []
+			for j in nodes[i].want_pieces:
+				if j in nodes[node_id].have_pieces:
+					can_fill.append(j)
+			if can_fill != []:	
+				piece_index = random.randint(0, len(can_fill))
+				piece = nodes[i].want_pieces[piece_index]
+
+				# if its small enough to get in one round then remove it from the want list
+				# and add it to the have list
+				transfer_rate =  min(nodes[i].remain_down, up_rate)
+				if piece < (transfer_rate*exchange_time):
+					# *BIG QUESTION* does download bandwidth get split between downloads?
+					nodes[i].remain_down =  nodes[i].remain_down - (piece/exchange_time)
+					del nodes[i].want_pieces[piece_index]
+					# maybe we should store the time the piece is finished in the have list instead of the size of the piece
+					finish_time = piece/transfer_rate # this should come out in seconds
+					nodes[i].have_pieces[piece_index] = finish_time + event[0]
+					exchange_time = exchange_time - finish_time
+				# otherwise subtract the amount that we can get from the piece size and leave
+				# it in the want list
+				else:
+					nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*exchange_time)
+					nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
+					exchange_time = 0
 			else:
-				nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*exchange_time)
-				nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
-				exchange_time = 0
+				break
 		
 	# Schedule the next update_peers event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
