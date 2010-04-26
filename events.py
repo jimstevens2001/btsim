@@ -19,13 +19,20 @@ def add_node(event):
 	# Add the new node to the nodes dictionary.
 	nodes[node_id] = Node(node_id)
 
-	# Get peers for it.
-	nodes[node_id].get_peers(event[0])
-
-	# Schedule the first update_peers event.
-	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 	print 'Added node',node_id,'at',event[0]
 	print
+
+	# Run the initial exchange_round for this node
+	exchange_round(event)
+
+	# Get peers for it.
+	#nodes[node_id].get_peers(event[0])
+
+	# generate the priority_list for our set of peers
+	#nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
+
+	# Schedule the first update_peers event.
+	#wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def update_peers(event):
 	node_id = event[2]
@@ -60,6 +67,9 @@ def exchange_round(event):
 	# if we need more peers, get them
 	if (len(nodes[node_id].peers)+len(nodes[node_id].unchoked)) < nodes[node_id].desired_peers:
 		nodes[node_id].get_peers(event[0])
+
+	# generate the priority_list for our set of peers
+	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
 
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
