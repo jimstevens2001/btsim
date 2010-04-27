@@ -85,13 +85,7 @@ def exchange_round(event):
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
 
 	# run the unchoke algorithm
-	nodes[node_id].update_unchoke(event[0]);
-
-	# let peers know that they're being uploaded to and how much
-	up_rate = nodes[node_id].max_up / 5
-	for i in nodes[node_id].unchoked:
-		nodes[i].curr_down[node_id] = up_rate
-		nodes[node_id].curr_up[i] = up_rate		
+	nodes[node_id].update_unchoke(event[0]);			
 	
 	# compute completed pieces
 	for i in nodes[node_id].unchoked:
@@ -109,8 +103,13 @@ def exchange_round(event):
 			piece_index = random.choice(can_fill)
 			piece_remaining = nodes[i].want_pieces[piece_index]
 
-			# if its small enough to get in one round then add a finish piece event to the work queue
+			# let peers know that they're being uploaded to and how much
+			up_rate = nodes[node_id].max_up / 5
 			transfer_rate =  min(nodes[i].remain_down, up_rate)
+			nodes[i].curr_down[node_id] = transfer_rate
+			nodes[node_id].curr_up[i] = transfer_rate
+
+			# if its small enough to get in one round then add a finish piece event to the work queue
 			if piece_remaining < (transfer_rate*exchange_time):
 				# *BIG QUESTION* does download bandwidth get split between downloads?
 				nodes[i].remain_down =  nodes[i].remain_down - (piece_remaining/exchange_time)
@@ -126,7 +125,9 @@ def exchange_round(event):
 				nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
 				exchange_time = 0
 		else:
-			break
+			# setting rates to 0 cause nothing is moving cause we have nothing they want
+			nodes[i].curr_down[node_id] = 0
+			nodes[node_id].curr_up[i] = 0
 		
 	# Schedule the next exchange_round event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
