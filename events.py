@@ -17,41 +17,19 @@ def add_node(event):
 	node_id = event[2]
 
 	# Add the new node to the nodes dictionary.
-	nodes[node_id] = Node(node_id)
-
 	if len(event) >= 4:
-		have_list = event[3]
-		#copy the have list into the have_pieces dictionary
-		for i in range(len(have_list)):
-			nodes[node_id].have_pieces[i] = have_list[i] # I hope this works
-		print nodes[node_id].have_pieces
-
-	for i in range(NUM_PIECES):
-		if i in nodes[node_id].have_pieces:
-			pass
-		else:
-			nodes[node_id].want_pieces[i] = PIECE_SIZE
+		have = event[3]
+	else:
+		have = {}
+	nodes[node_id] = Node(node_id, have)
 
 	print 'Added node',node_id,'at',event[0]
+	print
 
 	# Run the initial exchange_round for this node
 	exchange_round(event)
 
-	# Get peers for it.
-	#nodes[node_id].get_peers(event[0])
 
-	# generate the priority_list for our set of peers
-	#nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
-
-	# Schedule the first update_peers event.
-	#wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
-
-def update_peers(event):
-	node_id = event[2]
-	nodes[node_id].get_peers(event[0])
-
-	# Schedule the next update_peers event.
-	wq.enqueue([wq.cur_time + QUERY_TIME, 'UPDATE_PEERS', node_id])
 
 # when a node leaves the swarm
 def remove_node(event):
@@ -63,19 +41,36 @@ def remove_node(event):
 
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
-		for i in wq.wq:
-			# check to make sure the event is big enough to be an update event
-			if(len(i) > 2):
-				if i[2] in nodes.keys():
-					if i[2] == node_id:
-						wq.remove_event(i)
-	wq.remove(node_id)
-	
+	del_list = [] 
+	for e in wq.wq:
+		# Remove all events that use e[2] as a node_id
+		if e[1] in ['ADD_NODE', 'REMOVE_NODE', 'EXCHANGE_ROUND', 'FINISH_PIECE']:
+			if e[2] == node_id:
+				del_list.append(e)
+				#wq.remove_event(e)
+
+		# Remove all events that use e[3] as a node_id
+		if e[1] in ['FINISH_PIECE']:
+			if e[3] == node_id:
+				del_list.append(e)
+				#wq.remove_event(e)
+
+		# Remove logs that use node_id
+		if e[1] == 'LOG' and e[2] in ['file_progress', 'priority_queue']:
+			if e[3] == node_id:
+				del_list.append(e)
+				#wq.remove_event(e)
+	for e in del_list:
+		wq.remove_event(e)
+			
+			
 	# will need to cancel any pieces that we had expect to be downloaded from this node 
+
 	
 	# remove the node from the node list
 	del nodes[node_id]
 	print 'Removed node',node_id,'at',event[0]
+	print wq.wq
 	print
 
 # Use this to update each peers download and upload rates per round and to decide 
@@ -84,8 +79,7 @@ def exchange_round(event):
 	node_id = event[2]
 
 	# if we need more peers, get them
-	if (len(nodes[node_id].peers)+len(nodes[node_id].unchoked)) < nodes[node_id].desired_peers:
-		nodes[node_id].get_peers(event[0])
+	nodes[node_id].get_peers(event[0])
 
 	# generate the priority_list for our set of peers
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
@@ -102,8 +96,6 @@ def exchange_round(event):
 	# compute completed pieces
 	for i in nodes[node_id].unchoked:
 		exchange_time = ROUND_TIME
-		# zero the recent piece field, it shouldn't matter between rounds
-		nodes[i].recent_piece = 0
 
 		# choose a random piece to upload
 		# first make of list of everything that we have that they want		
@@ -137,7 +129,7 @@ def exchange_round(event):
 		else:
 			break
 		
-	# Schedule the next update_peers event.
+	# Schedule the next exchange_round event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def finish_piece(event):
@@ -192,18 +184,17 @@ def kill_sim(event):
 def log(event):
 	time = event[0]
 	log_type = event[2]
+	print 'LOG Time=',time
+
 	if log_type == 'time':
-		print 'LOG Time=',time
+		pass
 	elif log_type == 'wq':
-		print 'LOG Time=',time
 		print 'Work Queue ='
 		print wq.get_queue()
 	elif log_type == 'nodes':
-		print 'LOG Time=',time
 		print 'Nodes ='
 		print nodes.keys()
 	elif log_type == 'peers':
-		print 'LOG Time=',time
 		print 'Peers ='
 		peers = {}
 		for i in nodes:
@@ -211,21 +202,19 @@ def log(event):
 		print peers
 	elif log_type == 'file_progress':
 		node_id = event[3]
-		print 'LOG Time=',time
 		print 'Node ',node_id,'s File Progress:'
 		for i in nodes[node_id].have_pieces:
 			print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
 	elif log_type == 'priority_queue':
 		node_id = event[3]
-		print 'LOG Time=',time
 		print 'Priority list for node',node_id,'is'
 		print nodes[node_id].priority_list
 	elif log_type == 'node_state':
-		print 'LOG Time=',time
 		for i in nodes:
 			print i,':',nodes[i].__dict__
 	else:
 		raise EventException('Invalid log_type')
+
 	print
 	
 
@@ -234,7 +223,6 @@ def log(event):
 
 handlers = {}
 handlers['ADD_NODE'] = add_node 		# Param: node_id, have_pieces
-handlers['UPDATE_PEERS'] = update_peers 	# Param: node_id
 handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, recieving node_id, piece_id, time_remaining

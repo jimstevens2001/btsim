@@ -44,14 +44,9 @@ class WorkQueue:
 		self.wq.append(event)
 		self.sorted = False
 	
-	def remove(self, node_id):
-		# Make sure the queue is not empty.
-		if self.empty():
-			# Throw exception
-			raise WorkQueueException('WorkQueue.empty() called with empty queue')
 	
-	def remove_event(self, event_id):
-		self.wq.remove(event_id)
+	def remove_event(self, event):
+		self.wq.remove(event)
 		
 
 def test():

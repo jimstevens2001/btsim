@@ -8,7 +8,7 @@ ROUND_TIME = 10
 
 # File Parameters
 NUM_PIECES = 100
-PIECE_SIZE = 50 # in bits
+PIECE_SIZE = 40 # in bits
 
 # Create the main event queue.
 wq = WorkQueue()

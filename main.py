@@ -23,7 +23,7 @@ for i in range(10):
 	wq.enqueue([x+75, 'LOG', 'file_progress', i])
 	wq.enqueue([x+100, 'REMOVE_NODE', i])
 #for i in range(20):
-        #wq.enqueue([10*i, 'LOG', 'node_state'])
+#        wq.enqueue([10*i, 'LOG', 'node_state'])
 
 
 wq.enqueue([250, 'KILL_SIM'])
