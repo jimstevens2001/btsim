@@ -106,17 +106,16 @@ def exchange_round(event):
 					can_fill.append(j)
 
 		if can_fill != []:	
-			temp_index = random.choice(range(len(can_fill)))
-			piece_index = can_fill[temp_index]
-			piece = nodes[i].want_pieces[piece_index]
+			piece_index = random.choice(can_fill)
+			piece_remaining = nodes[i].want_pieces[piece_index]
 
 			# if its small enough to get in one round then add a finish piece event to the work queue
 			transfer_rate =  min(nodes[i].remain_down, up_rate)
-			if piece < (transfer_rate*exchange_time):
+			if piece_remaining < (transfer_rate*exchange_time):
 				# *BIG QUESTION* does download bandwidth get split between downloads?
-				nodes[i].remain_down =  nodes[i].remain_down - (piece/exchange_time)
+				nodes[i].remain_down =  nodes[i].remain_down - (piece_remaining/exchange_time)
 				# maybe we should store the time the piece is finished in the have list instead of the size of the piece
-				finish_time = piece/transfer_rate # this should come out in seconds
+				finish_time = piece_remaining/transfer_rate # this should come out in seconds
 				exchange_time = exchange_time - finish_time
 				wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', node_id, i, piece_index, exchange_time])
 				nodes[i].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
@@ -154,16 +153,15 @@ def finish_piece(event):
 				can_fill.append(j)
 
 	if can_fill != []:	
-		temp_index = random.choice(range(len(can_fill)))
-	       	piece_index = can_fill[temp_index]
-	       	piece = nodes[recieving_node_id].want_pieces[piece_index]
+		piece_index = random.choice(can_fill)
+	       	piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
 		transfer_rate =  min(nodes[recieving_node_id].remain_down, up_rate)
-		if piece < (transfer_rate*exchange_time):
+		if piece_remaining < (transfer_rate*exchange_time):
 			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
-			finish_time = piece/transfer_rate # this should come out in seconds
+			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			exchange_time = exchange_time - finish_time
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, exchange_time])
 			# otherwise subtract the amount that we can get from the piece size and leave
