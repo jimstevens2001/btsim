@@ -49,14 +49,9 @@ class WorkQueue:
 		if self.empty():
 			# Throw exception
 			raise WorkQueueException('WorkQueue.empty() called with empty queue')
-
-		# Search the queue for events for this node_id
-		for i in self.wq:
-			# check to make sure the event is big enough to be an update event
-			if(len(i) > 2):
-				if(i[2] == node_id):
-					self.wq.remove(i)
-
+	
+	def remove_event(self, event_id):
+		self.wq.remove(event_id)
 		
 
 def test():

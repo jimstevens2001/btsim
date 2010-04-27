@@ -62,6 +62,13 @@ def remove_node(event):
 		nodes[i].remove_peer(node_id)
 
 	# find all events for this node and remove them from the work queue
+	# Search the queue for events for this node_id
+		for i in wq.wq:
+			# check to make sure the event is big enough to be an update event
+			if(len(i) > 2):
+				if i[2] in nodes.keys():
+					if i[2] == node_id:
+						wq.remove_event(i)
 	wq.remove(node_id)
 	
 	# will need to cancel any pieces that we had expect to be downloaded from this node 

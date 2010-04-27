@@ -5,7 +5,7 @@ To do list:
   queue that handle the transfer of a piece from the want list to the have list
 - change remove_node so that it finds partial downloads and handles them 
   properly
-- add if statement to the remove_node scan of the work_queue to make sure
+- *DONE*add if statement to the remove_node scan of the work_queue to make sure
   event[2] is a node_id
 - *DONE*change the add_node event so that it can add a seed or a partial
   download
