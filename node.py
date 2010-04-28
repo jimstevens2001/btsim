@@ -28,7 +28,10 @@ class Node:
 		# value: the time the peering was made
 		self.unchoked = {} # Set of unchoked peers this list should never have more than 5 things in it
 
-		self.interest = {} # Set of peers who are interested in us and their first choice piece
+		# interest dictionary
+		# key: peers that are interested in downloading from this node
+		# value: the highest priority piece that this peer wants that we have
+		self.interest = {} 
 
 		self.op_unchoke = 0 # ID of current optimistically unchoked peer
 		self.op_unchoke_count = 0 # number of times we've tried to unchoke this peer, try 3 times then switch
@@ -131,6 +134,10 @@ class Node:
 			available_nodes.remove(new_peer)
 			nodes[new_peer].add_peer(self.id, time)
 			self.add_peer(new_peer, time)
+
+		# Now that we have some new peers, lets update our entry in their interest dictionary
+		# This also updates the interest dictionary at the beginning of each exchange round
+		self.update_interest()
 			
 		print 'peers for node',self.id,'at time',wq.cur_time
 		print self.peers 
@@ -229,6 +236,28 @@ class Node:
 				# Run this op_unchoke peer for another round.
 				self.op_unchoke_count = self.op_unchoke_count + 1
 
+	# Update our entry in the interest dictionaries of our peers
+	# This should be called whenever a peer is added or an exchange round begins
+	def update_interest(self):
+		# create a temporary copy of the peer dictionaries
+		temp_peers = {} 
+		num_all_peers = num_peers() 
+		for i in range(num_all_peers):
+			if i in self.peers.keys():
+				temp_peers[i] = self.peers[i]
+			elif i in self.unchoked.keys():
+				temp_peers[i] = self.unchoked[i]
+
+		# go through the priority list and find out which peers have these pieces
+		for i in range(len(self.priority_list)):
+			for j in temp_peers:
+				if self.priority_list[i] in nodes[j].have_pieces:
+					nodes[j].interest[self.id] = self.priority_list[i]
+					# remove the peer from the temporary list cause we've found the rarest piece it has
+					# that we want
+					del temp_peers[j]
+					
+			
 
 	# Sorts the priority list of the node based on rarity
 	def sort_priority(self):
