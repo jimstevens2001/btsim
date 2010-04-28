@@ -73,6 +73,41 @@ def remove_node(event):
 	print wq.wq
 	print
 
+
+# This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
+def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
+	# choose a random piece to upload
+	# first make of list of everything that we have that they want		
+	can_fill = []
+	for j in nodes[recieving_node_id].want_pieces.keys():
+		if nodes[recieving_node_id].want_pieces[j] != 0:
+			if j in nodes[sending_node_id].have_pieces.keys():
+				can_fill.append(j)
+
+	if can_fill != []:	
+		piece_index = random.choice(can_fill)
+		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
+
+		# if its small enough to get in one round then add a finish piece event to the work queue
+		if piece_remaining < (transfer_rate*time_remaining):
+			# *BIG QUESTION* does download bandwidth get split between downloads?
+			nodes[recieving_node_id].remain_down =  nodes[recieving_node_id].remain_down - (piece_remaining/time_remaining)
+			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
+			finish_time = piece_remaining/transfer_rate # this should come out in seconds
+			event_time = time_remaining - finish_time
+			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
+			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
+		# otherwise subtract the amount that we can get from the piece size and leave
+		# it in the want list
+		else:
+			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*time_remaining)
+			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
+			time_remaining = 0
+	else:
+		# setting rates to 0 cause nothing is moving cause we have nothing they want
+		nodes[recieving_node_id].curr_down[sending_node_id] = 0
+		nodes[sending_node_id].curr_up[recieving_node_id] = 0
+
 # Use this to update each peers download and upload rates per round and to decide 
 # also includes the unchoke algorithm at the beginning
 def exchange_round(event):
@@ -87,47 +122,18 @@ def exchange_round(event):
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);			
 	
-	# compute completed pieces
+	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
 		exchange_time = ROUND_TIME
 
-		# choose a random piece to upload
-		# first make of list of everything that we have that they want		
-		can_fill = []
-		for j in nodes[i].want_pieces.keys():
-			if nodes[i].want_pieces[j] != 0:
-				if j in nodes[node_id].have_pieces.keys():
-					can_fill.append(j)
+		# let peers know that they're being uploaded to and how much
+		up_rate = nodes[node_id].max_up / 5
+		transfer_rate =  min(nodes[i].remain_down, up_rate)
+		nodes[i].curr_down[node_id] = transfer_rate
+		nodes[node_id].curr_up[i] = transfer_rate
 
-		if can_fill != []:	
-			piece_index = random.choice(can_fill)
-			piece_remaining = nodes[i].want_pieces[piece_index]
 
-			# let peers know that they're being uploaded to and how much
-			up_rate = nodes[node_id].max_up / 5
-			transfer_rate =  min(nodes[i].remain_down, up_rate)
-			nodes[i].curr_down[node_id] = transfer_rate
-			nodes[node_id].curr_up[i] = transfer_rate
-
-			# if its small enough to get in one round then add a finish piece event to the work queue
-			if piece_remaining < (transfer_rate*exchange_time):
-				# *BIG QUESTION* does download bandwidth get split between downloads?
-				nodes[i].remain_down =  nodes[i].remain_down - (piece_remaining/exchange_time)
-				# maybe we should store the time the piece is finished in the have list instead of the size of the piece
-				finish_time = piece_remaining/transfer_rate # this should come out in seconds
-				exchange_time = exchange_time - finish_time
-				wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', node_id, i, piece_index, exchange_time])
-				nodes[i].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
-			# otherwise subtract the amount that we can get from the piece size and leave
-			# it in the want list
-			else:
-				nodes[i].want_pieces[piece_index] = nodes[i].want_pieces[piece_index] - (transfer_rate*exchange_time)
-				nodes[i].remain_down = max(0, (nodes[i].remain_down - transfer_rate))
-				exchange_time = 0
-		else:
-			# setting rates to 0 cause nothing is moving cause we have nothing they want
-			nodes[i].curr_down[node_id] = 0
-			nodes[node_id].curr_up[i] = 0
+		piece_exchange(node_id, i, exchange_time, transfer_rate)
 		
 	# Schedule the next exchange_round event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
@@ -144,35 +150,7 @@ def finish_piece(event):
 
 	up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
-	# Now, if there's time, schdule another piece to complete
-	# choose a random piece to upload
-	# first make of list of everything that we have that they want
-	can_fill = []
-	for j in nodes[recieving_node_id].want_pieces.keys():
-		if nodes[recieving_node_id].want_pieces[j] != 0:
-			if j in nodes[sending_node_id].have_pieces.keys():
-				can_fill.append(j)
-
-	if can_fill != []:	
-		piece_index = random.choice(can_fill)
-	       	piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
-
-
-		# if its small enough to get in one round then add a finish piece event to the work queue
-		transfer_rate =  min(nodes[recieving_node_id].remain_down, up_rate)
-		if piece_remaining < (transfer_rate*exchange_time):
-			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
-			finish_time = piece_remaining/transfer_rate # this should come out in seconds
-			exchange_time = exchange_time - finish_time
-			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, exchange_time])
-			# otherwise subtract the amount that we can get from the piece size and leave
-			# it in the want list
-			nodes[recieving_node_id].want_pieces[piece_index] = 0
-		else:
-			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*exchange_time)
-			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
-			exchange_time = 0
-	
+	piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
