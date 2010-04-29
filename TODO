@@ -9,5 +9,6 @@ To do list:
   event[2] is a node_id
 - *DONE*change the add_node event so that it can add a seed or a partial
   download
-- implement interest dictionary
+- *DONE*implement interest dictionary
 - implement altruism
+- make the interest dictionary full update a periodic event

@@ -17,11 +17,11 @@ def add_node(event):
 	node_id = event[2]
 
 	# Add the new node to the nodes dictionary.
-	if len(event) >= 4:
-		have = event[3]
+	if len(event) >= 5:
+		have = event[4]
 	else:
 		have = {}
-	nodes[node_id] = Node(node_id, have)
+	nodes[node_id] = Node(node_id, 'random', have)
 
 	print 'Added node',node_id,'at',event[0]
 	print
@@ -77,15 +77,24 @@ def remove_node(event):
 # This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
-	# first make of list of everything that we have that they want		
+	# first make of list of everything that we have that they want	
+	print 'PIECE EXCHANGE IS CALLED'
 	can_fill = []
 	for j in nodes[recieving_node_id].want_pieces.keys():
 		if nodes[recieving_node_id].want_pieces[j] != 0:
 			if j in nodes[sending_node_id].have_pieces.keys():
 				can_fill.append(j)
 
+	if sending_node_id == 11:
+		print 'Node 11s can fill list is: ',can_fill
+
 	if can_fill != []:	
-		piece_index = random.choice(can_fill)
+		if nodes[sending_node_id].piece_selection == 'random':
+			piece_index = random.choice(can_fill)
+		else:
+			piece_index = nodes[sending_node_id].interest[j]
+			print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
+
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -148,6 +157,9 @@ def finish_piece(event):
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
+	# Update the interest dictionary
+	nodes[recieving_node_id].update_interest(sending_node_id)
+
 	up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
 	piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
@@ -186,6 +198,10 @@ def log(event):
 		node_id = event[3]
 		print 'Priority list for node',node_id,'is'
 		print nodes[node_id].priority_list
+	elif log_type == 'interest_dict':
+		node_id = event[3]
+		print 'The interest dictionary for node ',node_id,' is '
+		print nodes[node_id].interest
 	elif log_type == 'node_state':
 		for i in nodes:
 			print i,':',nodes[i].__dict__
