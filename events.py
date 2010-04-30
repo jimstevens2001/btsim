@@ -44,14 +44,22 @@ def remove_node(event):
 	del_list = [] 
 	for e in wq.wq:
 		# Remove all events that use e[2] as a node_id
-		if e[1] in ['ADD_NODE', 'REMOVE_NODE', 'EXCHANGE_ROUND', 'FINISH_PIECE']:
+		if e[1] in ['ADD_NODE', 'REMOVE_NODE', 'EXCHANGE_ROUND']:
 			if e[2] == node_id:
+				del_list.append(e)
+				#wq.remove_event(e)
+
+		# Special case for the finish_piece event to account for partial download
+		if e[1] == 'FINISH_PIECE':
+			if e[2] == node_id:
+				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
 				#wq.remove_event(e)
 
 		# Remove all events that use e[3] as a node_id
 		if e[1] in ['FINISH_PIECE']:
 			if e[3] == node_id:
+				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
 				#wq.remove_event(e)
 
@@ -160,6 +168,20 @@ def finish_piece(event):
 	up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
 	piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
+
+# sending or receiving node leaves mid round
+def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
+	
+	# time =  the time now
+	# event_time = when the download was supposed to finish
+	# compute how much of the piece got downloaded
+	transfer_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+	total_time = PIECE_SIZE/transfer_rate
+	time_started = event_time - total_time
+	time_elapsed = time_started - time
+	amount_downloaded = transfer_rate*time_elapsed
+	amount_left = nodes[recieving_node_id].want_pieces[piece_id] - amount_downloaded
+	nodes[recieving_node_id].want_pieces[piece_id] = amount_left
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
