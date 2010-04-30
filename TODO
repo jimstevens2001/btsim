@@ -3,7 +3,7 @@ To do list:
   that it isn't uploading things it doesn't have
 - *DONE*change exchange_round so that it adds finish_piece events to the work 
   queue that handle the transfer of a piece from the want list to the have list
-- change remove_node so that it finds partial downloads and handles them 
+- *DONE*change remove_node so that it finds partial downloads and handles them 
   properly
 - *DONE*add if statement to the remove_node scan of the work_queue to make sure
   event[2] is a node_id
@@ -11,4 +11,6 @@ To do list:
   download
 - *DONE*implement interest dictionary
 - implement altruism
-- make the interest dictionary full update a periodic event
+- implement a reset mechanism for the download capacity of a node (right now 
+  remain down gets subtracted from but never reset so eventually it is
+  reduced to zero and all downloading stops in the swarm)

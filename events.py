@@ -1,5 +1,6 @@
 import random
 import sys
+import pickle
 
 from node import Node
 from globals import *
@@ -35,10 +36,6 @@ def add_node(event):
 def remove_node(event):
 	node_id = event[2]
 
-	# remove the node from all the peer and unchoked lists of the other nodes
-	for i in nodes:
-		nodes[i].remove_peer(node_id)
-
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
 	del_list = [] 
@@ -71,8 +68,10 @@ def remove_node(event):
 	for e in del_list:
 		wq.remove_event(e)
 			
-			
-	# will need to cancel any pieces that we had expect to be downloaded from this node 
+
+	# remove the node from all the peer and unchoked lists of the other nodes
+	for i in nodes:
+		nodes[i].remove_peer(node_id) 
 
 	
 	# remove the node from the node list
@@ -105,6 +104,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 		# if its small enough to get in one round then add a finish piece event to the work queue
 		if piece_remaining < (transfer_rate*time_remaining):
 			# *BIG QUESTION* does download bandwidth get split between downloads?
+			# need a way to reset this
 			nodes[recieving_node_id].remain_down =  nodes[recieving_node_id].remain_down - (piece_remaining/time_remaining)
 			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
@@ -175,6 +175,9 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 	# time =  the time now
 	# event_time = when the download was supposed to finish
 	# compute how much of the piece got downloaded
+	print 'We are in partial download'
+	print 'The receiving node id is: ',recieving_node_id
+	print 'The sending node id is: ',sending_node_id
 	transfer_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 	total_time = PIECE_SIZE/transfer_rate
 	time_started = event_time - total_time
@@ -210,9 +213,32 @@ def log(event):
 		print peers
 	elif log_type == 'file_progress':
 		node_id = event[3]
-		print 'Node ',node_id,'s File Progress:'
-		for i in nodes[node_id].have_pieces:
-			print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
+			#file.write(temp_string)
+			for i in nodes[node_id].have_pieces:
+				file.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
+			file.write('\n')
+		else:
+			print 'Node ',node_id,'s File Progress:'
+			for i in nodes[node_id].have_pieces:
+				print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
+	elif log_type == 'node_peers':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Node '+str(node_id)+'s Peers at time '+str(time)+' are: ')
+			if nodes[node_id].peers.keys() != []:
+				file.write('    ')
+				for i in nodes[node_id].peers:
+					file.write(str(nodes[i].id)+' ')
+			file.write('\n')
+			file.write('\n')
+		else:
+			print 'Node ',node_id,'s Peers at time ',time,'are: '
+			if nodes[node_id].peers.keys() != []:
+				print nodes[node_id].peers	
 	elif log_type == 'priority_queue':
 		node_id = event[3]
 		print 'Priority list for node',node_id,'is'
