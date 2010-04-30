@@ -140,8 +140,8 @@ class Node:
 			self.add_peer(new_peer, time)
 			
 		print 'peers for node',self.id,'at time',wq.cur_time
-		print self.peers 
-		print self.unchoked
+		print 'Peers (5):',self.peers 
+		print 'Unchoked (5):',self.unchoked
 		print
 
 	
@@ -182,7 +182,7 @@ class Node:
 			self.unchoked[id] = self.peers[id]
 			del self.peers[id]
 
-		print self.unchoked
+		print 'Unchoked:',self.unchoked
 
 		# see if the op_unchoke got picked
 		for i in self.unchoked:
@@ -221,7 +221,7 @@ class Node:
 						self.op_unchoke_count = 0
 
 						# Move the op_unchoke back to the choked list
-						print self.unchoked
+						print 'Unchoked(4):',self.unchoked
 						self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
 						del self.unchoked[self.op_unchoke]
 						self.op_unchoke = -1
@@ -317,7 +317,7 @@ class Node:
 			for i in range(len(temp_del2)):
 				print temp_del2[i]
 				self.priority_list.remove(temp_del2[i])	
-				print self.priority_list
+				print 'priority_list:',self.priority_list
 
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):

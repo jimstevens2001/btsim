@@ -78,7 +78,7 @@ def remove_node(event):
 	# remove the node from the node list
 	del nodes[node_id]
 	print 'Removed node',node_id,'at',event[0]
-	print wq.wq
+	print wq.get_queue()
 	print
 
 
@@ -107,7 +107,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
-		print nodes[recieving_node_id].want_pieces
+		print 'Want_pieces:',nodes[recieving_node_id].want_pieces
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -142,7 +142,7 @@ def exchange_round(event):
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
 	
-	print nodes[node_id].unchoked
+	print 'Unchoked (in ER):',nodes[node_id].unchoked
 	
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
@@ -170,8 +170,8 @@ def exchange_round(event):
 		up_rate = nodes[node_id].max_up / 5
 		transfer_rate =  min(remain_down, up_rate)
 
-		print nodes[node_id].unchoked
-		print nodes[node_id].interest
+		print 'Unchoked(3):',nodes[node_id].unchoked
+		print 'Interest',nodes[node_id].interest
 
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
