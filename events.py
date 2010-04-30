@@ -107,6 +107,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
+		print nodes[recieving_node_id].want_pieces
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -133,6 +134,9 @@ def exchange_round(event):
 
 	# generate the priority_list for our set of peers
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
+
+	# update the interest dictionary to reflect the new priority
+	nodes[node_id].update_full_interest()
 
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);			
@@ -182,6 +186,7 @@ def finish_piece(event):
 	exchange_time = event[5]
 	
 	print 'The finish piece recieving node is: ',recieving_node_id
+	print 'The piece being finished is: ',piece_id
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 

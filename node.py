@@ -138,10 +138,6 @@ class Node:
 			available_nodes.remove(new_peer)
 			nodes[new_peer].add_peer(self.id, time)
 			self.add_peer(new_peer, time)
-
-		# Now that we have some new peers, lets update our entry in their interest dictionary
-		# This also updates the interest dictionary at the beginning of each exchange round
-		self.update_full_interest()
 			
 		print 'peers for node',self.id,'at time',wq.cur_time
 		print self.peers 
@@ -266,6 +262,7 @@ class Node:
 
 		print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
 
+
 		# clear our entry in all of our peers interest dictionaries because it might be out of date
 		# however, if the entry is a partially downloaded piece, instead remove that peer from
 		# temp_peers cause we don't want to touch that dictionary entry
@@ -310,18 +307,18 @@ class Node:
 				print temp_del2[i]
 				self.priority_list.remove(temp_del2[i])	
 				print self.priority_list
-			
+
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):
 		# scan through our priority list and find the next thing that this peer has that we want
-		print 'Old value for this nodes entry in the peers dictionary: ',nodes[peer].interest[self.id]
+		temp_del = NUM_PIECES+1
 		for i in range(len(self.priority_list)):
 			if self.priority_list[i] in nodes[peer].have_pieces:
 				nodes[peer].interest[self.id] = self.priority_list[i]
 				temp_del =  self.priority_list[i]
 				break
-		self.priority_list.remove(temp_del)	
-		print 'New value for this nodes entry in the peers dictionary: ',nodes[peer].interest[self.id]
+		if temp_del != NUM_PIECES+1:
+			self.priority_list.remove(temp_del)	
 		# check to see if we actually updated the interest entry, if not delete it since they no longer have anything we want
 		if nodes[peer].interest[self.id] == NUM_PIECES+1:
 			del nodes[peer].interest[self.id]
@@ -335,6 +332,7 @@ class Node:
 		for i in self.want_pieces:
 			# don't want to add in flight pieces to the priority queue
 			if self.want_pieces[i] != 0:
+				# don't want to add pieces that are already in the interest dictionary
 				count_dict[i] = 0
 				for j in all_peers:
 					if i in nodes[j].have_pieces:
@@ -347,5 +345,4 @@ class Node:
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		self.priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
-		
 				
