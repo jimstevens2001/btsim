@@ -56,7 +56,7 @@ for i in range(10):
 		wq.enqueue([j, 'LOG', 'curr_up', i, cuf])
 		wq.enqueue([j, 'LOG', 'interest', i, intf])
 		wq.enqueue([j, 'LOG', 'want', i, wf])
-	#wq.enqueue([x+300, 'REMOVE_NODE', i])
+	#wq.enqueue([x+200, 'REMOVE_NODE', i])
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 

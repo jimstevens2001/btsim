@@ -111,7 +111,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
-		if piece_remaining < (transfer_rate*time_remaining):
+		if piece_remaining <= (transfer_rate*time_remaining):
 			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			event_time = time_remaining - finish_time
@@ -146,7 +146,7 @@ def exchange_round(event):
 	
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
-		exchange_time = ROUND_TIME
+		exchange_time = ROUND_TIME-1
 
 		del_list = []
 		# only unchoked peers should have a curr_down entry
