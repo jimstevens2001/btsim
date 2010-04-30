@@ -117,6 +117,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			event_time = time_remaining - finish_time
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
 			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
+			nodes[sending_node_id].interest[recieving_node_id] = NUM_PIECES+1
 			# otherwise subtract the amount that we can get from the piece size and leave
 			# it in the want list
 		else:
@@ -139,7 +140,9 @@ def exchange_round(event):
 	nodes[node_id].update_full_interest()
 
 	# run the unchoke algorithm
-	nodes[node_id].update_unchoke(event[0]);			
+	nodes[node_id].update_unchoke(event[0]);
+	
+	print nodes[node_id].unchoked
 	
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
@@ -167,7 +170,8 @@ def exchange_round(event):
 		up_rate = nodes[node_id].max_up / 5
 		transfer_rate =  min(remain_down, up_rate)
 
-		print transfer_rate
+		print nodes[node_id].unchoked
+		print nodes[node_id].interest
 
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
@@ -193,9 +197,11 @@ def finish_piece(event):
 	# Update the interest dictionary
 	nodes[recieving_node_id].update_interest(sending_node_id)
 
-	up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+	# Check to see if there is anything more we can get from this peer
+	if recieving_node_id in nodes[sending_node_id].interest.keys():
+		up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
-	piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
+		piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
 
 # sending or receiving node leaves mid round
 def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
@@ -244,7 +250,7 @@ def log(event):
 		if len(event) > 4:
 			file = event[4]
 			file.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
-			#file.write(temp_string)
+			file.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
 			for i in nodes[node_id].have_pieces:
 				file.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
 			file.write('\n')
@@ -307,14 +313,26 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Priority list for node '+str(node_id)+' is: \n')
+			file.write('Priority list for node '+str(node_id)+' at time '+str(time)+' is: \n')
 			for i in range(len(nodes[node_id].priority_list)):
 				file.write(str(nodes[node_id].priority_list[i])+' ')
 			file.write('\n')
 			file.write('\n')
 		else:
-			print 'Priority list for node',node_id,'is'
+			print 'Priority list for node ',node_id,' at time ',time,' is'
 			print nodes[node_id].priority_list
+	elif log_type == 'want':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Want list for node '+str(node_id)+' at time '+str(time)+' is: \n')
+			for i in nodes[node_id].want_pieces:
+				file.write('    '+str(i)+' : '+str(nodes[node_id].want_pieces[i])+' \n')
+			file.write('\n')
+		else:
+			print 'Want list for node ',node_id,' at time ',time,' is: '
+			for i in nodes[node_id].want_pieces:
+				print '    ',i,' : ',nodes[node_id].want_pieces[i],' '
 	elif log_type == 'interest_dict':
 		node_id = event[3]
 		print 'The interest dictionary for node ',node_id,' is '

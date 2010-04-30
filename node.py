@@ -37,7 +37,7 @@ class Node:
 		# value: the highest priority piece that this peer wants that we have
 		self.interest = {} 
 
-		self.op_unchoke = 0 # ID of current optimistically unchoked peer
+		self.op_unchoke = -1 # ID of current optimistically unchoked peer
 		self.op_unchoke_count = 0 # number of times we've tried to unchoke this peer, try 3 times then switch
 
 		self.max_up = 100 # Default upload capacity
@@ -156,6 +156,7 @@ class Node:
 		# build the unchoke list for the peers we have
 		unchoke_list = []
 		if self.want_pieces.keys() == []:
+			print 'Curr_up is: ',self.curr_up
 			for i in self.curr_up:
 				# only unchoke them if they want to download something from us
 				if i in self.interest.keys():
@@ -181,7 +182,7 @@ class Node:
 			self.unchoked[id] = self.peers[id]
 			del self.peers[id]
 
-
+		print self.unchoked
 
 		# see if the op_unchoke got picked
 		for i in self.unchoked:
@@ -193,7 +194,7 @@ class Node:
 		if self.op_unchoke_count != 0:
 			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
 			del self.peers[self.op_unchoke]
-		
+
 		# take care of the optimistic unchoke
 		self.update_op_unchoke()
 
@@ -211,7 +212,19 @@ class Node:
 				# Move the op_unchoke back to the choked list.
 				self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
 				del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
-			                                      # one of the four unchoked peers this round
+				                                   # one of the four unchoked peers this round
+				self.op_unchoke = -1
+			# make sure the current optimistic unchoke is still interested
+			elif self.op_unchoke != -1:
+				if self.op_unchoke not in self.interest.keys():
+					if self.op_unchoke_count != 0:
+						self.op_unchoke_count = 0
+
+						# Move the op_unchoke back to the choked list
+						print self.unchoked
+						self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
+						del self.unchoked[self.op_unchoke]
+						self.op_unchoke = -1
 
 
 			if self.op_unchoke_count == 0: # first time we're here or old op_unchoke was removed
@@ -268,8 +281,6 @@ class Node:
 		# temp_peers cause we don't want to touch that dictionary entry
 		del_list = []
 		for i in range(len(temp_peers)):
-			print temp_peers
-			print nodes[temp_peers[i]]
 			if self.id in nodes[temp_peers[i]].interest.keys():
 				piece_index = nodes[temp_peers[i]].interest[self.id]
 				print nodes[temp_peers[i]].interest[self.id]
@@ -279,7 +290,7 @@ class Node:
 				elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
 					del nodes[temp_peers[i]].interest[self.id]
 				else:
-					del_list.append(i)
+					del_list.append(temp_peers[i])
 		
 		for i in range(len(del_list)):
 			temp_peers.remove(del_list[i])

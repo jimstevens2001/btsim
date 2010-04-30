@@ -12,6 +12,7 @@ curr_down_file = 'curr_down_record'
 curr_up_file = 'curr_up_record'
 interest_file = 'interest_record'
 priority_file = 'priority_record'
+want_file = 'want_record'
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
@@ -33,9 +34,10 @@ cdf = open(curr_down_file, 'w')
 cuf = open(curr_up_file, 'w')
 intf = open(interest_file, 'w')
 pqf = open(priority_file, 'w')
+wf = open(want_file, 'w')
 
 # Records for the seed
-for j in range(10, 900, 10):
+for j in range(10, 300, 10):
 	wq.enqueue([j, 'LOG', 'file_progress', 11, fpf])
 	wq.enqueue([j, 'LOG', 'node_peers', 11, pf])
 	wq.enqueue([j, 'LOG', 'curr_down', 11, cdf])
@@ -46,20 +48,21 @@ for i in range(10):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority'])
 	# periodic checks on the progression of the swarm
-	for j in range(x+1, 900, 3):
+	for j in range(x+1, 300, 3):
 		wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
 		wq.enqueue([j, 'LOG', 'file_progress', i, fpf])
 		wq.enqueue([j, 'LOG', 'node_peers', i, pf])
 		wq.enqueue([j, 'LOG', 'curr_down', i, cdf])
 		wq.enqueue([j, 'LOG', 'curr_up', i, cuf])
 		wq.enqueue([j, 'LOG', 'interest', i, intf])
+		wq.enqueue([j, 'LOG', 'want', i, wf])
 	#wq.enqueue([x+300, 'REMOVE_NODE', i])
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 
 wq.enqueue([50, 'LOG', 'interest_dict', 11])
 wq.enqueue([150, 'LOG', 'interest_dict', 11])
-wq.enqueue([900, 'KILL_SIM'])
+wq.enqueue([300, 'KILL_SIM'])
 
 
 # Main queue loop
@@ -79,3 +82,4 @@ cdf.close()
 cuf.close()
 intf.close()
 pqf.close()
+wf.close()
