@@ -8,6 +8,10 @@ from globals import *
 file_progress_file = 'file_progress_record'
 can_fill_file = 'can_fill_record'
 peers_file = 'peers_record'
+curr_down_file = 'curr_down_record'
+curr_up_file = 'curr_up_record'
+interest_file = 'interest_record'
+priority_file = 'priority_record'
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
@@ -25,22 +29,37 @@ wq.enqueue([0, 'ADD_NODE', 11, 'priority', have_list])
 fpf = open(file_progress_file, 'w')
 cff = open(can_fill_file, 'w')
 pf = open(peers_file, 'w')
+cdf = open(curr_down_file, 'w')
+cuf = open(curr_up_file, 'w')
+intf = open(interest_file, 'w')
+pqf = open(priority_file, 'w')
+
+# Records for the seed
+for j in range(10, 900, 10):
+	wq.enqueue([j, 'LOG', 'file_progress', 11, fpf])
+	wq.enqueue([j, 'LOG', 'node_peers', 11, pf])
+	wq.enqueue([j, 'LOG', 'curr_down', 11, cdf])
+	wq.enqueue([j, 'LOG', 'curr_up', 11, cuf])
+	wq.enqueue([j, 'LOG', 'interest', 11, intf])
 
 for i in range(10):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority'])
-	wq.enqueue([x+50, 'LOG', 'priority_queue', i])
 	# periodic checks on the progression of the swarm
-	for j in range(x+10, 700, 10):
+	for j in range(x+1, 900, 3):
+		wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
 		wq.enqueue([j, 'LOG', 'file_progress', i, fpf])
 		wq.enqueue([j, 'LOG', 'node_peers', i, pf])
+		wq.enqueue([j, 'LOG', 'curr_down', i, cdf])
+		wq.enqueue([j, 'LOG', 'curr_up', i, cuf])
+		wq.enqueue([j, 'LOG', 'interest', i, intf])
 	#wq.enqueue([x+300, 'REMOVE_NODE', i])
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 
 wq.enqueue([50, 'LOG', 'interest_dict', 11])
 wq.enqueue([150, 'LOG', 'interest_dict', 11])
-wq.enqueue([700, 'KILL_SIM'])
+wq.enqueue([900, 'KILL_SIM'])
 
 
 # Main queue loop
@@ -56,4 +75,7 @@ while not wq.empty():
 fpf.close()
 cff.close()
 pf.close()
-
+cdf.close()
+cuf.close()
+intf.close()
+pqf.close()

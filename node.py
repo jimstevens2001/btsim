@@ -290,29 +290,38 @@ class Node:
 		print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
 				
 		# go through the priority list and find out which peers have these pieces
+		temp_del2 = []
 		for i in range(len(self.priority_list)):
 			temp_del = len(temp_peers)+1
 			for j in range(len(temp_peers)):
 				if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
 					nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-					# break out of the loop cause we've found a peer for that piece
 					temp_del = temp_peers[j]
+					temp_del2.append(self.priority_list[i])
+					# break out of the loop cause we've found a peer for that piece
 					break
 			# remove the peer we found for this piece so we don't associate it with another piece
 			if temp_del != len(temp_peers)+1:
 				temp_peers.remove(temp_del)
-					
+			# remove this piece from the list so we don't try to get it again
+		if temp_del2 != []:
+			print 'we are removing something from the priority list'
+			for i in range(len(temp_del2)):
+				print temp_del2[i]
+				self.priority_list.remove(temp_del2[i])	
+				print self.priority_list
 			
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):
 		# scan through our priority list and find the next thing that this peer has that we want
+		print 'Old value for this nodes entry in the peers dictionary: ',nodes[peer].interest[self.id]
 		for i in range(len(self.priority_list)):
 			if self.priority_list[i] in nodes[peer].have_pieces:
 				nodes[peer].interest[self.id] = self.priority_list[i]
 				temp_del =  self.priority_list[i]
 				break
-		self.priority_list.remove(temp_del)
-		
+		self.priority_list.remove(temp_del)	
+		print 'New value for this nodes entry in the peers dictionary: ',nodes[peer].interest[self.id]
 		# check to see if we actually updated the interest entry, if not delete it since they no longer have anything we want
 		if nodes[peer].interest[self.id] == NUM_PIECES+1:
 			del nodes[peer].interest[self.id]
@@ -324,15 +333,17 @@ class Node:
 		count_list = []
 		all_peers = self.peers.keys() + self.unchoked.keys()
 		for i in self.want_pieces:
-			count_dict[i] = 0
-			for j in all_peers:
-				if i in nodes[j].have_pieces:
-					if i in count_dict:
-						count_dict[i] += 1
-					else:
-						count_dict[i] = 1
-			if i in count_dict:
-				count_list.append([count_dict[i], i])
+			# don't want to add in flight pieces to the priority queue
+			if self.want_pieces[i] != 0:
+				count_dict[i] = 0
+				for j in all_peers:
+					if i in nodes[j].have_pieces:
+						if i in count_dict:
+							count_dict[i] += 1
+						else:
+							count_dict[i] = 1
+				if i in count_dict:
+					count_list.append([count_dict[i], i])
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		self.priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list

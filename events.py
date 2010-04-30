@@ -16,13 +16,14 @@ class EventException(Exception): pass
 
 def add_node(event):
 	node_id = event[2]
+	selection = event[3]
 
 	# Add the new node to the nodes dictionary.
 	if len(event) >= 5:
 		have = event[4]
 	else:
 		have = {}
-	nodes[node_id] = Node(node_id, 'random', have)
+	nodes[node_id] = Node(node_id, selection, have)
 
 	print 'Added node',node_id,'at',event[0]
 	print
@@ -86,41 +87,41 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
 	print 'PIECE EXCHANGE IS CALLED'
-	can_fill = []
-	for j in nodes[recieving_node_id].want_pieces.keys():
-		if nodes[recieving_node_id].want_pieces[j] != 0:
-			if j in nodes[sending_node_id].have_pieces.keys():
-				can_fill.append(j)
-
-	if can_fill != []:	
-		if nodes[sending_node_id].piece_selection == 'random':
+		
+	print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
+	if nodes[sending_node_id].piece_selection == 'random':
+		can_fill = []
+		for j in nodes[recieving_node_id].want_pieces.keys():
+			if nodes[recieving_node_id].want_pieces[j] != 0:
+				if j in nodes[sending_node_id].have_pieces.keys():
+					can_fill.append(j)
+		if can_fill != []:
 			piece_index = random.choice(can_fill)
 		else:
-			piece_index = nodes[sending_node_id].interest[j]
-			print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
+			# setting rates to 0 cause nothing is moving cause we have nothing they want
+			nodes[recieving_node_id].curr_down[sending_node_id] = 0
+			nodes[sending_node_id].curr_up[recieving_node_id] = 0
+			piece_index = NUM_PIECES+1
+	else:
+		piece_index = nodes[sending_node_id].interest[recieving_node_id]
+		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
+	if(piece_index != NUM_PIECES+1):
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
 		if piece_remaining < (transfer_rate*time_remaining):
-			# *BIG QUESTION* does download bandwidth get split between downloads?
-			# need a way to reset this
-			nodes[recieving_node_id].remain_down =  nodes[recieving_node_id].remain_down - (piece_remaining/time_remaining)
 			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			event_time = time_remaining - finish_time
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
 			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
-		# otherwise subtract the amount that we can get from the piece size and leave
-		# it in the want list
+			# otherwise subtract the amount that we can get from the piece size and leave
+			# it in the want list
 		else:
 			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*time_remaining)
 			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
 			time_remaining = 0
-	else:
-		# setting rates to 0 cause nothing is moving cause we have nothing they want
-		nodes[recieving_node_id].curr_down[sending_node_id] = 0
-		nodes[sending_node_id].curr_up[recieving_node_id] = 0
 
 # Use this to update each peers download and upload rates per round and to decide 
 # also includes the unchoke algorithm at the beginning
@@ -140,12 +141,32 @@ def exchange_round(event):
 	for i in nodes[node_id].unchoked:
 		exchange_time = ROUND_TIME
 
+		del_list = []
+		# only unchoked peers should have a curr_down entry
+		# I really wish there was a better place to do this
+		for k in nodes[i].curr_down:
+			if k not in nodes[i].unchoked:
+				del_list.append(k)
+		
+		for k in range(len(del_list)):
+			del nodes[i].curr_down[del_list[k]]
+
+		# *BIG QUESTION* does download bandwidth get split between downloads?
+		# need a way to reset this
+		remain_down = nodes[i].max_down
+		for k in nodes[i].curr_down:
+			if k != node_id:
+				remain_down = remain_down - nodes[i].curr_down[k]
+
+
 		# let peers know that they're being uploaded to and how much
 		up_rate = nodes[node_id].max_up / 5
-		transfer_rate =  min(nodes[i].remain_down, up_rate)
+		transfer_rate =  min(remain_down, up_rate)
+
+		print transfer_rate
+
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
-
 
 		piece_exchange(node_id, i, exchange_time, transfer_rate)
 		
@@ -153,12 +174,14 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def finish_piece(event):
+	print 'FINISH PIECE REACHED'
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
 	recieving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
 	
+	print 'The finish piece recieving node is: ',recieving_node_id
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
@@ -229,20 +252,64 @@ def log(event):
 		if len(event) > 4:
 			file = event[4]
 			file.write('Node '+str(node_id)+'s Peers at time '+str(time)+' are: ')
-			if nodes[node_id].peers.keys() != []:
-				file.write('    ')
-				for i in nodes[node_id].peers:
-					file.write(str(nodes[i].id)+' ')
+			file.write('    ')
+			for i in nodes[node_id].peers:
+				file.write(str(nodes[i].id)+' ')
 			file.write('\n')
 			file.write('\n')
 		else:
 			print 'Node ',node_id,'s Peers at time ',time,'are: '
-			if nodes[node_id].peers.keys() != []:
-				print nodes[node_id].peers	
+			print nodes[node_id].peers
+	elif log_type == 'curr_down':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Node '+str(node_id)+'s Curr_down at time '+str(time)+' is: \n')
+			for i in nodes[node_id].curr_down:
+				file.write('Peer '+str(i)+' is pushing '+str(nodes[node_id].curr_down[i])+'\n')
+			file.write('\n')
+		else:
+			print 'Node ',node_id,'s Curr_down at time ',time,' is:'
+			for i in nodes[node_id].curr_down:
+				print 'Peer ',i,' is pulling ',nodes[node_id].curr_down[i]
+	elif log_type == 'curr_up':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Node '+str(node_id)+'s Curr_up at time '+str(time)+' is: \n')
+			for i in nodes[node_id].curr_up:
+				file.write('Peer '+str(i)+' is pulling '+str(nodes[node_id].curr_up[i])+'\n')
+			file.write('\n')
+		else:
+			print 'Node ',node_id,'s Curr_up at time ',time,' is:'
+			for i in nodes[node_id].curr_up:
+				print 'Peer ',i,' is pulling ',nodes[node_id].curr_up[i]
+	elif log_type == 'interest':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
+			file.write('Node '+str(node_id)+'s Interest Dictionary at time '+str(time)+' is: \n')
+			file.write('    Interested in Peers : For Piece \n')
+			for i in nodes[node_id].interest:
+				file.write('    '+str(i)+' : '+str(nodes[node_id].interest[i])+'\n')
+			file.write('\n')
+		else:
+			print 'Node ',node_id,'s Interest Dictionary at time ',time,' is:'
+			print '    Interested in Peers : For Piece'
+			for i in nodes[node_id].interest:
+				print '    ',i,' : ',nodes[node_id].interest[i]				
 	elif log_type == 'priority_queue':
 		node_id = event[3]
-		print 'Priority list for node',node_id,'is'
-		print nodes[node_id].priority_list
+		if len(event) > 4:
+			file = event[4]
+			file.write('Priority list for node '+str(node_id)+' is: \n')
+			for i in range(len(nodes[node_id].priority_list)):
+				file.write(str(nodes[node_id].priority_list[i])+' ')
+			file.write('\n')
+			file.write('\n')
+		else:
+			print 'Priority list for node',node_id,'is'
+			print nodes[node_id].priority_list
 	elif log_type == 'interest_dict':
 		node_id = event[3]
 		print 'The interest dictionary for node ',node_id,' is '
