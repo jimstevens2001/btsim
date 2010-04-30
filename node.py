@@ -159,10 +159,17 @@ class Node:
 
 		# build the unchoke list for the peers we have
 		unchoke_list = []
-		for i in self.curr_down:
-			# only unchoke them if they want to download something from us
-			if i in self.interest.keys():
-				unchoke_list.append([self.curr_down[i], i])
+		if self.want_pieces.keys() == []:
+			for i in self.curr_up:
+				# only unchoke them if they want to download something from us
+				if i in self.interest.keys():
+					unchoke_list.append([self.curr_up[i], i])
+
+		else:
+			for i in self.curr_down:
+				# only unchoke them if they want to download something from us
+				if i in self.interest.keys():
+					unchoke_list.append([self.curr_down[i], i])
 			
 		unchoke_list.sort();
 		unchoke_list.reverse();

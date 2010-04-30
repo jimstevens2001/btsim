@@ -85,9 +85,6 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			if j in nodes[sending_node_id].have_pieces.keys():
 				can_fill.append(j)
 
-	if sending_node_id == 11:
-		print 'Node 11s can fill list is: ',can_fill
-
 	if can_fill != []:	
 		if nodes[sending_node_id].piece_selection == 'random':
 			piece_index = random.choice(can_fill)
