@@ -106,6 +106,9 @@ class Node:
 		if node_id in self.curr_down:
 			del self.curr_down[node_id]
 
+		if node_id in self.interest:
+			del self.interest[node_id]
+
 		self.sort_priority()
 
 	def num_peers(self):
@@ -119,16 +122,26 @@ class Node:
 			pass
 
 		else:
-			print 'node',self.id,'(',len(self.peers),'peers ) is querying the tracker and now wants at least',self.desired_peers
+			print 'node',self.id,'(',self.num_peers(),'peers ) is querying the tracker and now wants at least',self.desired_peers
 			# Get a list of all the nodes that we are not peers with.
 			available_nodes = nodes.keys()
 			available_nodes.remove(self.id)
 			[available_nodes.remove(i) for i in self.unchoked.keys()]
 			[available_nodes.remove(i) for i in self.peers.keys()]
-			[available_nodes.remove(i) for i in available_nodes if nodes[i].num_peers() >= nodes[i].max_peers]
+			del_list = []
+			for i in available_nodes:
+				if nodes[i].num_peers() >= nodes[i].max_peers:
+					del_list.append(i)
+			for i in range(len(del_list)):
+				available_nodes.remove(del_list[i])
 
 			# Otherwise, get more peers until we have desired_peers (or there are none left to get).
 			peers_needed = min([self.desired_peers-self.num_peers(), len(available_nodes)])
+			#outf = open('out_file', 'a')
+			#outf.write('node '+str(self.id)+' ( '+str(self.num_peers())+' peers ) has the available nodes '+str(available_nodes)+'\n')
+			#outf.write('node '+str(self.id)+' ( '+str(self.num_peers())+' peers ) thinks it needs '+str(peers_needed)+' peers \n')
+			#outf.write('\n')
+			#outf.close()
 
 			for i in range(peers_needed):
 				# Pick a random peer among those left
@@ -140,14 +153,16 @@ class Node:
 				self.add_peer(new_peer, time)
 			
 		#print 'peers for node',self.id,'at time',wq.cur_time
-		#print 'Peers (5):',self.peers 
-		#print 'Unchoked (5):',self.unchoked
 		#print
 
 	
 	# unchoking process
 	# there might be a much simpler way to do this, I was really tired when I wrote it
 	def update_unchoke(self, time):
+		
+		#print 'Node ',self.id,'has Peers (6):',self.peers
+		#print 'Node ',self.id,'has Unchoked (6):',self.unchoked,'\n'
+
 		# Move all unchoked nodes back into the peers list.
 		for i in self.unchoked:
 			self.peers[i] = self.unchoked[i]
@@ -156,7 +171,7 @@ class Node:
 		# build the unchoke list for the peers we have
 		unchoke_list = []
 		if self.want_pieces.keys() == []:
-			print 'Curr_up is: ',self.curr_up
+			#print 'Curr_up is: ',self.curr_up
 			for i in self.curr_up:
 				# only unchoke them if they want to download something from us
 				if i in self.interest.keys():
@@ -195,9 +210,11 @@ class Node:
 			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
 			del self.peers[self.op_unchoke]
 
+		#print 'Node ',self.id,'has Peers (7):',self.peers
+		#print 'Node ',self.id,'has Unchoked (7):',self.unchoked,'\n'
+
 		# take care of the optimistic unchoke
 		self.update_op_unchoke()
-
 
 	# Pick the node to be optimistically unchoked.
 	def update_op_unchoke(self):	
@@ -283,7 +300,7 @@ class Node:
 		for i in range(len(temp_peers)):
 			if self.id in nodes[temp_peers[i]].interest.keys():
 				piece_index = nodes[temp_peers[i]].interest[self.id]
-				print nodes[temp_peers[i]].interest[self.id]
+				#print nodes[temp_peers[i]].interest[self.id]
 				if piece_index in nodes[temp_peers[i]].want_pieces.keys():
 					if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
 						del nodes[temp_peers[i]].interest[self.id]
@@ -313,11 +330,11 @@ class Node:
 				temp_peers.remove(temp_del)
 			# remove this piece from the list so we don't try to get it again
 		if temp_del2 != []:
-			print 'we are removing something from the priority list'
+			#print 'we are removing something from the priority list'
 			for i in range(len(temp_del2)):
-				print temp_del2[i]
+				#print temp_del2[i]
 				self.priority_list.remove(temp_del2[i])	
-				print 'priority_list:',self.priority_list
+				#print 'priority_list:',self.priority_list
 
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):

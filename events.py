@@ -63,7 +63,7 @@ def remove_node(event):
 				#wq.remove_event(e)
 
 		# Remove logs that use node_id
-		if e[1] == 'LOG' and e[2] in ['file_progress', 'priority_queue', 'node_peers', 'curr_down', 'curr_up', 'interest', 'want']:
+		if e[1] == 'LOG' and e[2] in ['file_progress', 'priority_queue', 'node_peers', 'curr_down', 'curr_up', 'interest', 'want', 'compare']:
 			if e[3] == node_id:
 				del_list.append(e)
 				#wq.remove_event(e)
@@ -87,7 +87,7 @@ def remove_node(event):
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
-	print 'PIECE EXCHANGE IS CALLED'
+	#print 'PIECE EXCHANGE IS CALLED'
 		
 	#print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
 	if nodes[sending_node_id].piece_selection == 'random':
@@ -109,6 +109,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 
 	if(piece_index != NUM_PIECES+1):
 		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
+		print 'piece exchange recieving node id is: ',recieving_node_id
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -133,15 +134,24 @@ def exchange_round(event):
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
+	#outf = open('out_file', 'a')
+	#outf.write('Node '+str(node_id)+' has Peers (4): '+str(nodes[node_id].peers)+'\n') 
+	#outf.write('Node '+str(node_id)+' has Unchoked (4): '+str(nodes[node_id].unchoked)+'\n')
+	#outf.write('\n')
+	#outf.close()
 
 	# generate the priority_list for our set of peers
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
 
 	# update the interest dictionary to reflect the new priority
 	nodes[node_id].update_full_interest()
+	
 
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
+
+	#print 'Node ',node_id,'has Peers (5):',nodes[node_id].peers 
+	#print 'Node ',node_id,'has Unchoked (5):',nodes[node_id].unchoked,'\n'
 	
 	#print 'Unchoked (in ER):',nodes[node_id].unchoked
 	
@@ -183,15 +193,17 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def finish_piece(event):
-	print 'FINISH PIECE REACHED'
+	#print 'FINISH PIECE REACHED'
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
 	recieving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	#print 'The finish piece recieving node is: ',recieving_node_id
-	#print 'The piece being finished is: ',piece_id
+	print 'The finish piece recieving node is: ',recieving_node_id
+	print 'The finish piece sending node is: ',sending_node_id
+	print 'The piece being finished is: ',piece_id
+	print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
@@ -223,7 +235,7 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	print wq.get_queue()
+	#print wq.get_queue()
 	sys.exit(0)
 
 
@@ -342,19 +354,17 @@ def log(event):
 		count_dict = {}
 		count_list = []
 
-		for i in nodes[node_id].want_pieces:
-			# don't want to add in flight pieces to the priority queue
-			if nodes[node_id].want_pieces[i] != 0:
-				# don't want to add pieces that are already in the interest dictionary
-				count_dict[i] = 0
-				for j in nodes.keys():
-					if i in nodes[j].have_pieces:
-						if i in count_dict:
-							count_dict[i] += 1
-						else:
-							count_dict[i] = 1
-				if i in count_dict:
-					count_list.append([count_dict[i], i])
+		for i in range(NUM_PIECES):
+			# don't want to add pieces that are already in the interest dictionary
+			count_dict[i] = 0
+			for j in nodes.keys():
+				if i in nodes[j].have_pieces:
+					if i in count_dict:
+						count_dict[i] += 1
+					else:
+						count_dict[i] = 1
+			if i in count_dict:
+				count_list.append([count_dict[i], i])
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		global_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
@@ -364,19 +374,17 @@ def log(event):
 		count_list = []
 
 		all_peers = nodes[node_id].peers.keys() + nodes[node_id].unchoked.keys()
-		for i in nodes[node_id].want_pieces:
-			# don't want to add in flight pieces to the priority queue
-			if nodes[node_id].want_pieces[i] != 0:
-				# don't want to add pieces that are already in the interest dictionary
-				count_dict[i] = 0
-				for j in all_peers:
-					if i in nodes[j].have_pieces:
-						if i in count_dict:
-							count_dict[i] += 1
-						else:
-							count_dict[i] = 1
-				if i in count_dict:
-					count_list.append([count_dict[i], i])
+		for i in range(NUM_PIECES):
+			# don't want to add pieces that are already in the interest dictionary
+			count_dict[i] = 0
+			for j in all_peers:
+				if i in nodes[j].have_pieces:
+					if i in count_dict:
+						count_dict[i] += 1
+					else:
+						count_dict[i] = 1
+			if i in count_dict:
+				count_list.append([count_dict[i], i])
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		local_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
@@ -417,7 +425,7 @@ def log(event):
 	else:
 		raise EventException('Invalid log_type')
 
-	print
+	#print
 	
 
 

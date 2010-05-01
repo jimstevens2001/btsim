@@ -57,7 +57,7 @@ for i in range(10):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority'])
 	# periodic checks on the progression of the swarm
-	for j in range(x+1, 300, 50):
+	for j in range(x+1, 300, 5):
 		wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
 		wq.enqueue([j, 'LOG', 'file_progress', i, fpf])
 		wq.enqueue([j, 'LOG', 'node_peers', i, pf])
@@ -71,8 +71,8 @@ for i in range(10):
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 
-wq.enqueue([10, 'LOG', 'interest_dict', 11])
-wq.enqueue([150, 'LOG', 'interest_dict', 11])
+#wq.enqueue([10, 'LOG', 'interest_dict', 11])
+#wq.enqueue([150, 'LOG', 'interest_dict', 11])
 wq.enqueue([300, 'KILL_SIM'])
 
 
@@ -97,3 +97,4 @@ wf.close()
 locf.close()
 globf.close()
 distf.close()
+
