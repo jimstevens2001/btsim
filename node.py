@@ -116,33 +116,33 @@ class Node:
 		# Check to see if more peers are needed.
 		if self.num_peers() >= self.desired_peers:
 			# If not, return because there is nothing to do.
-			return
+			pass
 
-		print 'node',self.id,'(',len(self.peers),'peers ) is querying the tracker and now wants at least',self.desired_peers
+		else:
+			print 'node',self.id,'(',len(self.peers),'peers ) is querying the tracker and now wants at least',self.desired_peers
+			# Get a list of all the nodes that we are not peers with.
+			available_nodes = nodes.keys()
+			available_nodes.remove(self.id)
+			[available_nodes.remove(i) for i in self.unchoked.keys()]
+			[available_nodes.remove(i) for i in self.peers.keys()]
+			[available_nodes.remove(i) for i in available_nodes if nodes[i].num_peers() >= nodes[i].max_peers]
 
-		# Get a list of all the nodes that we are not peers with.
-		available_nodes = nodes.keys()
-		available_nodes.remove(self.id)
-		[available_nodes.remove(i) for i in self.unchoked.keys()]
-		[available_nodes.remove(i) for i in self.peers.keys()]
-		[available_nodes.remove(i) for i in nodes.keys() if nodes[i].num_peers() > nodes[i].max_peers]
+			# Otherwise, get more peers until we have desired_peers (or there are none left to get).
+			peers_needed = min([self.desired_peers-self.num_peers(), len(available_nodes)])
 
-		# Otherwise, get more peers until we have desired_peers (or there are none left to get).
-		peers_needed = min([self.desired_peers-self.num_peers(), len(available_nodes)])
-
-		for i in range(peers_needed):
-			# Pick a random peer among those left
-			new_peer = random.choice(available_nodes)
+			for i in range(peers_needed):
+				# Pick a random peer among those left
+				new_peer = random.choice(available_nodes)
 			
-			# Remove it from the available nodes list and set the peer for both nodes.
-			available_nodes.remove(new_peer)
-			nodes[new_peer].add_peer(self.id, time)
-			self.add_peer(new_peer, time)
+				# Remove it from the available nodes list and set the peer for both nodes.
+				available_nodes.remove(new_peer)
+				nodes[new_peer].add_peer(self.id, time)
+				self.add_peer(new_peer, time)
 			
-		print 'peers for node',self.id,'at time',wq.cur_time
-		print 'Peers (5):',self.peers 
-		print 'Unchoked (5):',self.unchoked
-		print
+		#print 'peers for node',self.id,'at time',wq.cur_time
+		#print 'Peers (5):',self.peers 
+		#print 'Unchoked (5):',self.unchoked
+		#print
 
 	
 	# unchoking process
@@ -182,7 +182,7 @@ class Node:
 			self.unchoked[id] = self.peers[id]
 			del self.peers[id]
 
-		print 'Unchoked:',self.unchoked
+		#print 'Unchoked:',self.unchoked
 
 		# see if the op_unchoke got picked
 		for i in self.unchoked:
@@ -221,7 +221,7 @@ class Node:
 						self.op_unchoke_count = 0
 
 						# Move the op_unchoke back to the choked list
-						print 'Unchoked(4):',self.unchoked
+						#print 'Unchoked(4):',self.unchoked
 						self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
 						del self.unchoked[self.op_unchoke]
 						self.op_unchoke = -1
@@ -273,7 +273,7 @@ class Node:
 		for  i in self.unchoked.keys():
 			temp_peers.append(i)
 
-		print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
+		#print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
 
 
 		# clear our entry in all of our peers interest dictionaries because it might be out of date
@@ -295,7 +295,7 @@ class Node:
 		for i in range(len(del_list)):
 			temp_peers.remove(del_list[i])
 
-		print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
+		#print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
 				
 		# go through the priority list and find out which peers have these pieces
 		temp_del2 = []
