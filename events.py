@@ -109,7 +109,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 
 	if(piece_index != NUM_PIECES+1):
 		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
-		print 'piece exchange recieving node id is: ',recieving_node_id
+		#print 'piece exchange recieving node id is: ',recieving_node_id
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -169,8 +169,7 @@ def exchange_round(event):
 		for k in range(len(del_list)):
 			del nodes[i].curr_down[del_list[k]]
 
-		# *BIG QUESTION* does download bandwidth get split between downloads?
-		# need a way to reset this
+		# Splitting download bandwidth
 		remain_down = nodes[i].max_down
 		for k in nodes[i].curr_down:
 			if k != node_id:
@@ -200,10 +199,10 @@ def finish_piece(event):
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	print 'The finish piece recieving node is: ',recieving_node_id
-	print 'The finish piece sending node is: ',sending_node_id
-	print 'The piece being finished is: ',piece_id
-	print nodes[recieving_node_id].want_pieces
+	#print 'The finish piece recieving node is: ',recieving_node_id
+	#print 'The finish piece sending node is: ',sending_node_id
+	#print 'The piece being finished is: ',piece_id
+	#print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 

@@ -21,7 +21,7 @@ distance_file = 'distance_record'
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
-for i in range(10):
+for i in range(100):
 	start_times.append(random.randint(0, 100))
 start_times.sort()
 
@@ -29,7 +29,7 @@ start_times.sort()
 have_list = []
 for i in range(NUM_PIECES):
 	have_list.append(0)
-wq.enqueue([0, 'ADD_NODE', 11, 'priority', have_list])
+wq.enqueue([0, 'ADD_NODE', 101, 'priority', have_list])
 
 # Open the output files to store the logs
 fpf = open(file_progress_file, 'w')
@@ -44,16 +44,16 @@ locf = open(local_file, 'w')
 globf = open(global_file, 'w')
 distf = open(distance_file, 'w')
 
-wq.enqueue([0, 'LOG', 'file_progress', 11, fpf])
+wq.enqueue([0, 'LOG', 'file_progress', 101, fpf])
 
 # Records for the seed
 for j in range(10, 300, 10):
-	wq.enqueue([j, 'LOG', 'node_peers', 11, pf])
-	wq.enqueue([j, 'LOG', 'curr_down', 11, cdf])
-	wq.enqueue([j, 'LOG', 'curr_up', 11, cuf])
-	wq.enqueue([j, 'LOG', 'interest', 11, intf])
+	wq.enqueue([j, 'LOG', 'node_peers', 101, pf])
+	wq.enqueue([j, 'LOG', 'curr_down', 101, cdf])
+	wq.enqueue([j, 'LOG', 'curr_up', 101, cuf])
+	wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
-for i in range(10):
+for i in range(100):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority'])
 	# periodic checks on the progression of the swarm
@@ -67,7 +67,7 @@ for i in range(10):
 		wq.enqueue([j, 'LOG', 'want', i, wf])
 		wq.enqueue([j, 'LOG', 'compare', i, locf, globf, distf])
 		
-	#wq.enqueue([x+100, 'REMOVE_NODE', i])
+	wq.enqueue([x+100, 'REMOVE_NODE', i])
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 

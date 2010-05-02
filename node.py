@@ -71,8 +71,8 @@ class Node:
 		#copy the have list into the have_pieces dictionary
 		for i in range(len(have)):
 			self.have_pieces[i] = have[i] # I hope this works
-		print 'Node',self.id,'starts with'
-		print self.have_pieces
+		#print 'Node',self.id,'starts with'
+		#print self.have_pieces
 
 
 	# Initialize the want_pieces dictionary
@@ -110,6 +110,8 @@ class Node:
 			del self.interest[node_id]
 
 		self.sort_priority()
+
+		self.update_full_interest()
 
 	def num_peers(self):
 		return len(self.peers) + len(self.unchoked)
