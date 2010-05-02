@@ -7,7 +7,7 @@ from globals import *
 
 #Node class to contain explicit copies of the bit field and peer lists
 class Node:
-	def __init__(self, node_id, selection, have):
+	def __init__(self, node_id, selection, altruism, leave, have):
 		self.id = node_id
 
 		# Specify the bounds on the number of allowed peers.
@@ -17,6 +17,11 @@ class Node:
 		# Style of next piece selection
 		# Options: Random, Priority
 		self.piece_selection = selection
+
+		# Style of altruism
+		# Options: leave_on_complete, eternal_seed, leave_time_after_complete, leave_after_round
+		self.altruism = altruism
+		self.leave_time = leave
 
 		# Pick a random number of desired peers.
 		# Will always try to have at least this many peers (but may have more).
@@ -107,7 +112,7 @@ class Node:
 			del self.curr_down[node_id]
 
 		if node_id in self.interest:
-			del self.interest[node_id]
+			del self.interest[node_id]			
 
 		self.sort_priority()
 

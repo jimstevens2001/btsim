@@ -20,11 +20,22 @@ def add_node(event):
 	selection = event[3]
 
 	# Add the new node to the nodes dictionary.
-	if len(event) >= 5:
-		have = event[4]
+	# Fully definted node with have list and altruism
+	if len(event) >= 7:
+		have = event[6]
+		altruism = event[4]
+		leave_time = event[5]
+	# Node without a have list
+	elif len(event) >= 6:
+		have = {}
+		altruism = event[4]
+		leave_time = event[5]
 	else:
 		have = {}
-	nodes[node_id] = Node(node_id, selection, have)
+		altruism = 'eternal_seed'
+		leave_time = 0
+
+	nodes[node_id] = Node(node_id, selection, altruism, leave_time, have)
 
 	print 'Added node',node_id,'at',event[0]
 	print
@@ -132,6 +143,13 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 def exchange_round(event):
 	node_id = event[2]
 
+	# if our altruism setting is to leave at the end of the round after we've got the whole file
+	# then schedule the leave event and don't start any new uploads
+	if nodes[node_id].altruism == 'leave_after_round':
+		if nodes[node_id].want_pieces.keys() == []:
+			wq.enqueue([wq.cur_time, 'REMOVE_NODE', node_id])
+			return # we're done here
+
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
 	#outf = open('out_file', 'a')
@@ -214,6 +232,13 @@ def finish_piece(event):
 		up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 
 		piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
+	# Check to see if there is anything more we can get from anyone
+	# if not, check to see if we should just seed or check out
+	elif nodes[recieving_node_id].want_pieces.keys() == []:
+		if nodes[recieving_node_id].altruism == 'leave_on_complete':
+			wq.enqueue([wq.cur_time, 'REMOVE_NODE', recieving_node_id])
+		elif nodes[recieving_node_id].altruism == 'leave_time_after_complete':
+			wq.enqueue([wq.cur_time + nodes[recieving_node_id].leave_time, 'REMOVE_NODE', recieving_node_id])
 
 # sending or receiving node leaves mid round
 def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
