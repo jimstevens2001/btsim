@@ -66,7 +66,7 @@ class Node:
 		# key: the pieces we DO NOT have
 		# value: the number of subblocks left to download
 		self.want_pieces = {} 
-		self.init_want()
+		self.init_want(have)
 
 
 
@@ -75,19 +75,32 @@ class Node:
 	def init_have(self, have):
 		#copy the have list into the have_pieces dictionary
 		for i in range(len(have)):
-			self.have_pieces[i] = have[i] # I hope this works
+			if have[i] == PIECE_SIZE:
+				self.have_pieces[i] = 'recovered' # I hope this works
+
 		#print 'Node',self.id,'starts with'
 		#print self.have_pieces
 
 
 	# Initialize the want_pieces dictionary
-	def init_want(self):
+	def init_want(self, have):
 		for i in range(NUM_PIECES):
 			if i in self.have_pieces:
 				# Already have the piece, so skip it.
 				pass
+			elif len(have) > 0:
+				if have[i] > 0:
+					self.want_pieces[i] = have[i]
+				else:
+					self.want_pieces[i] = PIECE_SIZE
 			else:
 				self.want_pieces[i] = PIECE_SIZE
+		
+		#if self.id == 2:
+			#print 'We are readding node 2'
+			#print have
+			#print self.have_pieces
+			#print self.want_pieces
 		
 		
 

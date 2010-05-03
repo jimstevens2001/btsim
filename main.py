@@ -25,15 +25,15 @@ distance_file = 'distance_record'
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
-for i in range(1000):
+for i in range(100):
 	start_times.append(random.randint(0, 100))
 start_times.sort()
 
 # create a full have list for the seed
 have_list = []
 for i in range(NUM_PIECES):
-	have_list.append(0)
-wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list])
+	have_list.append(PIECE_SIZE)
+wq.enqueue([0, 'ADD_NODE', 101, 'priority', 'eternal_seed', 0, have_list])
 
 # Open the output files to store the logs
 fpf = open(file_progress_file, 'w')
@@ -48,20 +48,20 @@ locf = open(local_file, 'w')
 globf = open(global_file, 'w')
 distf = open(distance_file, 'w')
 
-wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
+wq.enqueue([0, 'LOG', 'file_progress', 101, fpf])
 
 # Records for the seed
 for j in range(10, 300, 10):
-	wq.enqueue([j, 'LOG', 'node_peers', 1001, pf])
-	wq.enqueue([j, 'LOG', 'curr_down', 1001, cdf])
-	wq.enqueue([j, 'LOG', 'curr_up', 1001, cuf])
-	wq.enqueue([j, 'LOG', 'interest', 1001, intf])
+	wq.enqueue([j, 'LOG', 'node_peers', 101, pf])
+	wq.enqueue([j, 'LOG', 'curr_down', 101, cdf])
+	wq.enqueue([j, 'LOG', 'curr_up', 101, cuf])
+	wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
-for i in range(1000):
+for i in range(100):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
 	# periodic checks on the progression of the swarm
-	for j in range(x+1, 800, 5):
+	for j in range(x+1, 300, 5):
 		wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
 		wq.enqueue([j, 'LOG', 'file_progress', i, fpf])
 		wq.enqueue([j, 'LOG', 'node_peers', i, pf])
@@ -71,13 +71,15 @@ for i in range(1000):
 		wq.enqueue([j, 'LOG', 'want', i, wf])
 		wq.enqueue([j, 'LOG', 'compare', i, locf, globf, distf])
 		
-	#wq.enqueue([x+200, 'REMOVE_NODE', i])
+	#wq.enqueue([x+100, 'REMOVE_NODE', i])
+wq.enqueue([100, 'REMOVE_NODE', 2])
+wq.enqueue([150, 'ADD_NODE', 2, 'priority', 'leave_on_complete', 0])
 #for i in range(20):
 #        wq.enqueue([10*i, 'LOG', 'node_state'])
 
 #wq.enqueue([10, 'LOG', 'interest_dict', 11])
 #wq.enqueue([150, 'LOG', 'interest_dict', 11])
-wq.enqueue([800, 'KILL_SIM'])
+wq.enqueue([300, 'KILL_SIM'])
 
 
 # Main queue loop
@@ -101,4 +103,3 @@ wf.close()
 locf.close()
 globf.close()
 distf.close()
-

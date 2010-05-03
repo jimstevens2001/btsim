@@ -16,3 +16,6 @@ wq = WorkQueue()
 
 # Create the main node dictionary.
 nodes = {}
+
+# Have lists of removed nodes
+haves = {}

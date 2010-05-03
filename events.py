@@ -25,9 +25,13 @@ def add_node(event):
 		have = event[6]
 		altruism = event[4]
 		leave_time = event[5]
-	# Node without a have list
+	# Node without a have list prespecified
 	elif len(event) >= 6:
-		have = {}
+		# This node was previously deleted, set its have back to what it was
+		if node_id in haves.keys():
+			have = haves[node_id]
+		else:
+			have = {}
 		altruism = event[4]
 		leave_time = event[5]
 	else:
@@ -54,7 +58,7 @@ def remove_node(event):
 	del_list = [] 
 	for e in wq.wq:
 		# Remove all events that use e[2] as a node_id
-		if e[1] in ['ADD_NODE', 'REMOVE_NODE', 'EXCHANGE_ROUND']:
+		if e[1] in ['REMOVE_NODE', 'EXCHANGE_ROUND']:
 			if e[2] == node_id:
 				del_list.append(e)
 				#wq.remove_event(e)
@@ -86,6 +90,22 @@ def remove_node(event):
 	for i in nodes:
 		nodes[i].remove_peer(node_id) 
 
+	# save the nodes have and want lists
+	# we don't preserve who gave it to us
+	haves[node_id] = []
+	for i in range(NUM_PIECES):
+		if i in nodes[node_id].have_pieces.keys():
+			haves[node_id].append(PIECE_SIZE)
+		elif i in nodes[node_id].want_pieces.keys():
+			if nodes[node_id].want_pieces[i] < PIECE_SIZE:
+				haves[node_id].append(nodes[node_id].want_pieces[i])
+			else:
+				haves[node_id].append(0)
+		else:
+			haves[node_id].append(0)
+
+	#print nodes[node_id].have_pieces
+	#print haves[node_id]
 	
 	# remove the node from the node list
 	del nodes[node_id]
@@ -116,7 +136,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			piece_index = NUM_PIECES+1
 	else:
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
-		#print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
+		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
 		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
