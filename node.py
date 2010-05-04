@@ -142,7 +142,7 @@ class Node:
 			pass
 
 		else:
-			print 'node',self.id,'(',self.num_peers(),'peers ) is querying the tracker and now wants at least',self.desired_peers
+			#print 'node',self.id,'(',self.num_peers(),'peers ) is querying the tracker and now wants at least',self.desired_peers
 			# Get a list of all the nodes that we are not peers with.
 			available_nodes = nodes.keys()
 			available_nodes.remove(self.id)
@@ -355,6 +355,11 @@ class Node:
 				#print temp_del2[i]
 				self.priority_list.remove(temp_del2[i])	
 				#print 'priority_list:',self.priority_list
+
+		#print self.id
+		#print self.want_pieces
+		#print self.priority_list
+		#print self.interest
 
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):

@@ -6,6 +6,7 @@ MAX_PEERS = 15
 QUERY_TIME = 100
 ROUND_TIME = 10
 STOP_TIME = 250
+NUM_SEEDS = 1 # number of seeds that we start with
 
 # File Parameters
 NUM_PIECES = 100

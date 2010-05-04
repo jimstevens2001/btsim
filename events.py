@@ -113,12 +113,18 @@ def remove_node(event):
 	#print wq.get_queue()
 	#print
 
+	# Check to see if we're the last node in the swarm besides the starting seeds
+	if len(nodes.keys()) <= NUM_SEEDS: 
+		wq.enqueue([wq.cur_time, 'KILL_SIM'])
+
+	print 'The number of remaining nodes is now ',len(nodes.keys())
+
 
 # This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
-	#print 'PIECE EXCHANGE IS CALLED'
+	print 'PIECE EXCHANGE IS CALLED'
 		
 	#print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
 	if nodes[sending_node_id].piece_selection == 'random':
@@ -135,6 +141,8 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			nodes[sending_node_id].curr_up[recieving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
+		print 'we are checking the interest dictionary for node ',sending_node_id
+		print 'this interest dictionary contains ',nodes[sending_node_id].interest
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
 		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
@@ -149,6 +157,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			event_time = time_remaining - finish_time
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
+			print 'We are scheduling a finish piece event for piece ',piece_index,' at time',wq.cur_time + finish_time
 			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
 			nodes[sending_node_id].interest[recieving_node_id] = NUM_PIECES+1
 			# otherwise subtract the amount that we can get from the piece size and leave
@@ -192,7 +201,6 @@ def exchange_round(event):
 	#print 'Node ',node_id,'has Unchoked (5):',nodes[node_id].unchoked,'\n'
 	
 	#print 'Unchoked (in ER):',nodes[node_id].unchoked
-	
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
 		exchange_time = ROUND_TIME-1
@@ -230,7 +238,7 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 def finish_piece(event):
-	#print 'FINISH PIECE REACHED'
+	print 'FINISH PIECE REACHED'
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
 	recieving_node_id = event[3]
@@ -275,7 +283,19 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 	time_elapsed = time_started - time
 	amount_downloaded = transfer_rate*time_elapsed
 	amount_left = nodes[recieving_node_id].want_pieces[piece_id] - amount_downloaded
-	nodes[recieving_node_id].want_pieces[piece_id] = amount_left
+	if amount_left == 0:
+		del nodes[recieving_node_id].want_pieces[piece_id]
+		nodes[recieving_node_id].have_pieces[piece_id] = time
+		
+		if nodes[recieving_node_id].want_pieces.keys() == []:
+			if nodes[recieving_node_id].altruism == 'leave_on_complete':
+				wq.enqueue([wq.cur_time, 'REMOVE_NODE', recieving_node_id])
+			elif nodes[recieving_node_id].altruism == 'leave_time_after_complete':
+				wq.enqueue([wq.cur_time + nodes[recieving_node_id].leave_time, 'REMOVE_NODE', recieving_node_id])
+		
+	else:
+		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
+	print 'amount left was ',amount_left
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
@@ -428,14 +448,22 @@ def log(event):
 					else:
 						count_dict[i] = 1
 			if i in count_dict:
-				count_list.append([count_dict[i], i])
+				count_list.append([count_dict[i], i])			
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		local_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
-		if len(event) > 6:
+		if len(event) > 7:
 			lfile = event[4]
 			gfile = event[5]
 			dfile = event[6]
+			pfile = event[7]
+
+			#record the count dictionary so we know the rarity of pieces
+			pfile.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
+			pfile.write('    Piece : Count \n') 
+			for i in count_dict:
+				pfile.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
+
 			gfile.write('Global priority list at time '+str(time)+' is: \n')
 			for i in range(len(global_priority_list)):
 				gfile.write(str(global_priority_list[i])+' ')
