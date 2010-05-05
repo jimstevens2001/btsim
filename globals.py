@@ -1,5 +1,9 @@
 from work_queue import WorkQueue
 
+# Gossip
+GOSSIP = True
+#GOSSIP = False
+
 # Constants
 MIN_PEERS = 5
 MAX_PEERS = 60
