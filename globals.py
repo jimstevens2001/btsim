@@ -5,6 +5,7 @@ GOSSIP = True
 #GOSSIP = False
 
 # Constants
+NUM_PEERS=100
 MIN_PEERS = 5
 MAX_PEERS = 60
 DESIRED_PEERS = 30

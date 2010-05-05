@@ -12,7 +12,7 @@ from globals import *
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
 
-for i in range(100):
+for i in range(NUM_PEERS):
 	start_times.append(random.randint(0,100))
 start_times.sort()
 
@@ -69,9 +69,12 @@ wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 	#wq.enqueue([j, 'LOG', 'curr_up', 101, cuf])
 	#wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
-for i in range(100):
+for i in range(NUM_PEERS):
 	x = start_times[i]
-	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
+
+	#wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
+	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'eternal_seed', 0])
+
 	# periodic checks on the progression of the swarm
 	#for j in range(x+1, 900, 10):
 		#wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
