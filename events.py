@@ -149,6 +149,8 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 	if(piece_index != NUM_PIECES+1):
 		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
 		#print 'piece exchange recieving node id is: ',recieving_node_id
+		print 'receiving_node_id',recieving_node_id
+		print 'piece_index',piece_index
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -183,6 +185,10 @@ def exchange_round(event):
 			return
 		elif nodes[node_id].altruism == 'leave_time_after_complete':
 			wq.enqueue([wq.cur_time + nodes[node_id].leave_time, 'REMOVE_NODE', node_id])
+
+	# Run the gossip protocol
+	if GOSSIP:
+		nodes[node_id].gossip()
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
@@ -256,10 +262,10 @@ def finish_piece(event):
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	#print 'The finish piece recieving node is: ',recieving_node_id
-	#print 'The finish piece sending node is: ',sending_node_id
-	#print 'The piece being finished is: ',piece_id
-	#print nodes[recieving_node_id].want_pieces
+	print 'The finish piece recieving node is: ',recieving_node_id
+	print 'The finish piece sending node is: ',sending_node_id
+	print 'The piece being finished is: ',piece_id
+	print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
@@ -268,7 +274,10 @@ def finish_piece(event):
 
 	# Check to see if there is anything more we can get from this peer
 	if recieving_node_id in nodes[sending_node_id].interest.keys():
-		up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+		if recieving_node_id in nodes[sending_node_id].unchoked:
+			up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+		else:
+			raise Exception('Attempting to upload to someone not unchoked')
 
 		piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
 	# Check to see if there is anything more we can get from anyone
