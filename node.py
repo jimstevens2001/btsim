@@ -11,8 +11,8 @@ class Node:
 		self.id = node_id
 
 		# Specify the bounds on the number of allowed peers.
-		self.min_peers = 5
-		self.max_peers = 15
+		self.min_peers = MIN_PEERS
+		self.max_peers = MAX_PEERS
 
 		# Style of next piece selection
 		# Options: Random, Priority
@@ -25,7 +25,7 @@ class Node:
 
 		# Pick a random number of desired peers.
 		# Will always try to have at least this many peers (but may have more).
-		self.desired_peers = random.randint(self.min_peers, self.max_peers)
+		self.desired_peers = DESIRED_PEERS
 
 		# peers dictionary
 		# key: peers that are choked

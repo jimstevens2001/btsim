@@ -174,10 +174,15 @@ def exchange_round(event):
 
 	# if our altruism setting is to leave at the end of the round after we've got the whole file
 	# then schedule the leave event and don't start any new uploads
-	if nodes[node_id].altruism == 'leave_after_round':
-		if nodes[node_id].want_pieces.keys() == []:
+	if nodes[node_id].want_pieces.keys() == []:
+		if nodes[node_id].altruism == 'leave_after_round':
 			wq.enqueue([wq.cur_time, 'REMOVE_NODE', node_id])
 			return # we're done here
+		elif nodes[node_id].altruism == 'leave_on_complete':
+			wq.enqueue([wq.cur_time, 'REMOVE_NODE', node_id]) #not really necessary but here for completeness
+			return
+		elif nodes[node_id].altruism == 'leave_time_after_complete':
+			wq.enqueue([wq.cur_time + nodes[node_id].leave_time, 'REMOVE_NODE', node_id])
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
@@ -203,6 +208,8 @@ def exchange_round(event):
 	#print 'Unchoked (in ER):',nodes[node_id].unchoked
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
+		print 'we are preparing to send something to node ',i
+		print 'our unchoked dictionary was ',nodes[node_id].unchoked
 		exchange_time = ROUND_TIME-1
 
 		del_list = []
@@ -236,6 +243,10 @@ def exchange_round(event):
 		
 	# Schedule the next exchange_round event.
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
+
+	# Schedule the next log events
+	wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
+	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
 
 def finish_piece(event):
 	print 'FINISH PIECE REACHED'
@@ -325,12 +336,15 @@ def log(event):
 	elif log_type == 'file_progress':
 		node_id = event[3]
 		if len(event) > 4:
-			file = event[4]
-			file.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
-			file.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
+			tfile = event[4]
+			fpf = open(file_progress_file, 'a')
+			fpf.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
+			fpf.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
 			for i in nodes[node_id].have_pieces:
-				file.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
-			file.write('\n')
+				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
+			fpf.write('\n')
+			
+			fpf.close()
 		else:
 			print 'Node ',node_id,'s File Progress:'
 			for i in nodes[node_id].have_pieces:
@@ -458,23 +472,28 @@ def log(event):
 			dfile = event[6]
 			pfile = event[7]
 
-			#record the count dictionary so we know the rarity of pieces
-			pfile.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
-			pfile.write('    Piece : Count \n') 
-			for i in count_dict:
-				pfile.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
+			locf = open(lfile, 'a')
+			globf = open(gfile, 'a')
+			distf = open(dfile, 'a')
+			pcf = open(pfile, 'a')
 
-			gfile.write('Global priority list at time '+str(time)+' is: \n')
+			#record the count dictionary so we know the rarity of pieces
+			pcf.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
+			pcf.write('    Piece : Count \n') 
+			for i in count_dict:
+				pcf.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
+
+			globf.write('Global priority list at time '+str(time)+' is: \n')
 			for i in range(len(global_priority_list)):
-				gfile.write(str(global_priority_list[i])+' ')
-			gfile.write('\n')
-			gfile.write('\n')
-			lfile.write('Local priority list at time '+str(time)+' for node '+str(node_id)+' is: \n')
+				globf.write(str(global_priority_list[i])+' ')
+			globf.write('\n')
+			globf.write('\n')
+			locf.write('Local priority list at time '+str(time)+' for node '+str(node_id)+' is: \n')
 			for i in range(len(local_priority_list)):
-				lfile.write(str(local_priority_list[i])+' ')
-			lfile.write('\n')
-			lfile.write('\n')
-			dfile.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
+				locf.write(str(local_priority_list[i])+' ')
+			locf.write('\n')
+			locf.write('\n')
+			distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
 			distance = 0
 			for i in range(NUM_PIECES):
 				if i in local_priority_list:
@@ -485,8 +504,13 @@ def log(event):
 			else:
 				distance = 0
 			       
-			dfile.write('    '+str(distance)+' \n')
-			dfile.write('\n')
+			distf.write('    '+str(distance)+' \n')
+			distf.write('\n')
+		
+			locf.close()
+			globf.close()
+			distf.close()
+			pcf.close()
 	elif log_type == 'interest_dict':
 		node_id = event[3]
 		print 'The interest dictionary for node ',node_id,' is '
