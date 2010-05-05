@@ -35,6 +35,7 @@ class Node:
 		# unchoked dictionary
 		# key: peers that are unchoked
 		# value: the time the peering was made
+		# Note: AT NO TIME SHOULD SOMETHING BE IN BOTH PEERS AND UNCHOKED
 		self.unchoked = {} # Set of unchoked peers this list should never have more than 5 things in it
 
 		# interest dictionary
@@ -67,6 +68,13 @@ class Node:
 		# value: the number of subblocks left to download
 		self.want_pieces = {} 
 		self.init_want(have)
+
+		# Define the gossip queue
+		self.gossip_queue = []
+
+		# Define the gossip sequence number dictionary
+		self.my_gossip_num = 0
+		self.peer_gossip_numbers = {}
 
 
 
@@ -106,7 +114,7 @@ class Node:
 
 	def add_peer(self, node_id, time):
 		self.peers[node_id] = time
-		self.curr_down[node_id] = 0
+		#self.curr_down[node_id] = 0
 
 	def remove_peer(self, node_id):
 		if node_id in self.peers:
@@ -131,6 +139,18 @@ class Node:
 
 		self.update_full_interest()
 
+		# Remove all gossip messages from node
+		del_list = []
+		for msg in self.gossip_queue:
+			if node_id == msg[0]:
+				del_list.append(msg)
+		[self.gossip_queue.remove(msg) for msg in del_list]
+
+		# Delete gossip sequence number
+		if node_id in self.peer_gossip_numbers:
+			del self.peer_gossip_numbers[node_id]
+	
+
 	def num_peers(self):
 		return len(self.peers) + len(self.unchoked)
 
@@ -147,6 +167,7 @@ class Node:
 			available_nodes = nodes.keys()
 			available_nodes.remove(self.id)
 			[available_nodes.remove(i) for i in self.unchoked.keys()]
+			print self.peers.keys()
 			[available_nodes.remove(i) for i in self.peers.keys()]
 			del_list = []
 			for i in available_nodes:
@@ -399,3 +420,107 @@ class Node:
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		self.priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
 				
+
+	def add_gossip(self, msg):
+		# Add to end of queue (if it is not a message from this node).
+		if msg[0] == self.id:
+			return
+
+		# Delete old gossip messages from this node.
+		del_list = []
+		for i in self.gossip_queue:
+			if i[0] == msg[0]:
+				del_list.append(i)
+		[self.gossip_queue.remove(i) for i in del_list]
+
+		self.gossip_queue.append(msg)
+
+
+	def gossip(self):
+		# Step 1: Send my latest gossip message
+
+		# Find the three rarest pieces within my peer set
+		all_peers = self.peers.keys() + self.unchoked.keys()
+		piece_list = []
+		piece_dict = {}
+		for j in range(NUM_PIECES):
+			cnt = 0
+			for i in all_peers:
+				if j in nodes[i].have_pieces:
+					cnt += 1
+			piece_dict[j] = cnt
+			piece_list.append([cnt, j])
+		piece_list.sort()
+		rare_list = [i[1] for i in piece_list if i[1] not in self.have_pieces][0:3]
+
+		# If there is anything to send.
+		if len(rare_list) > 0:
+			# Form the gossip message
+			gossip_msg = [self.id, self.my_gossip_num, rare_list]
+
+			# Send it to all peers (call node[i].add_gossip()
+			for i in all_peers:
+				nodes[i].add_gossip(gossip_msg)
+
+		# Update my gossip sequence number
+		self.my_gossip_num += 1
+
+		# Step 2: Process my gossip queue and form the list of peer candidates
+		print wq.cur_time,': Processing gossip queue for node',self.id
+		print 'gossip_queue:',self.gossip_queue
+		print 'have list:',self.have_pieces.keys()
+		print
+
+		peer_candidates = []
+
+		for msg in self.gossip_queue:
+			make_peer = False
+
+			# If the node is not already a peer
+			if msg[0] not in all_peers:
+
+				# See if I have the piece
+				ppiece = []
+				for j in msg[2]:
+					if j in self.have_pieces:
+						if msg[0] not in peer_candidates:
+							peer_candidates.append(msg[0])	
+						# If so, then decide whether to peer with the source node
+						# I have a 2/P chance to peer with this node
+						upper_bound = 0.2
+						if piece_dict[j] == 0:
+							probability = upper_bound
+						else:
+							probability = upper_bound / piece_dict[j]
+						if random.random() < probability:
+							make_peer = True
+							ppiece.append(j)
+
+				# Add the peer if necessary
+				if make_peer and (self.num_peers() < self.max_peers) and (nodes[msg[0]].num_peers() < self.max_peers):
+					print wq.cur_time,': gossip resulted in new peering between',self.id,'and',msg[0],'for one of these pieces:',ppiece
+					self.add_peer(msg[0], wq.cur_time)
+					nodes[msg[0]].add_peer(self.id, wq.cur_time)
+				
+
+
+			# Initialize the node's sequence number if necessary
+			if msg[0] not in self.peer_gossip_numbers:
+				self.peer_gossip_numbers[msg[0]] = 0
+
+			# Decide whether to forward message to peers
+			if msg[1] > self.peer_gossip_numbers[msg[0]]:
+				# Update the gossip sequence number for this node.
+				self.peer_gossip_numbers[msg[0]] = msg[1]
+
+				# Forward the message to my peers if I didn't peer this node
+				if not make_peer:
+					for i in all_peers:
+						nodes[i].add_gossip(msg)
+				
+
+		# Step 3: Clear the gossip queue
+		self.gossip_queue = []
+
+
+

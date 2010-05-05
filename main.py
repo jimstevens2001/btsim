@@ -30,7 +30,7 @@ piece_count_file = 'rarity_record'
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
-for i in range(10):
+for i in range(100):
 	start_times.append(random.randint(0, 100))
 start_times.sort()
 
@@ -67,7 +67,7 @@ wq.enqueue([0, 'LOG', 'file_progress', 101, fpf])
 	#wq.enqueue([j, 'LOG', 'curr_up', 101, cuf])
 	#wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
-for i in range(10):
+for i in range(100):
 	x = start_times[i]
 	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
 	# periodic checks on the progression of the swarm
