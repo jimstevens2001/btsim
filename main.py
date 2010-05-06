@@ -12,7 +12,7 @@ from globals import *
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
 
-for i in range(NUM_PEERS):
+for i in range(NUM_NODES):
 	start_times.append(random.randint(0,100))
 start_times.sort()
 
@@ -36,8 +36,8 @@ pcf = open(piece_count_file, 'w')
 #pf = open(peers_file, 'w')
 #cdf = open(curr_down_file, 'w')
 #cuf = open(curr_up_file, 'w')
-intf = open(interest_file, 'w')
-pqf = open(priority_file, 'w')
+#intf = open(interest_file, 'w')
+#pqf = open(priority_file, 'w')
 #wf = open(want_file, 'w')
 #======================================
 
@@ -54,8 +54,8 @@ pcf.close()
 #pf.close()
 #cdf.close()
 #cuf.close()
-intf.close()
-pqf.close()
+#intf.close()
+#pqf.close()
 #wf.close()
 #======================================
 
@@ -70,7 +70,7 @@ wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 	#wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
 
-for i in range(NUM_PEERS):
+for i in range(NUM_NODES):
 	x = start_times[i]
 
 	#wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
@@ -78,12 +78,12 @@ for i in range(NUM_PEERS):
 
 	# periodic checks on the progression of the swarm
 	#for j in range(x+1, 900, 10):
-	wq.enqueue([x+1, 'LOG', 'priority_queue', i, priority_file])
+	        #wq.enqueue([x+1, 'LOG', 'priority_queue', i, priority_file])
 	wq.enqueue([x+1, 'LOG', 'file_progress', i, file_progress_file])
 		#wq.enqueue([j, 'LOG', 'node_peers', i, pf])
 		#wq.enqueue([j, 'LOG', 'curr_down', i, cdf])
 		#wq.enqueue([j, 'LOG', 'curr_up', i, cuf])
-	wq.enqueue([x+1, 'LOG', 'interest', i, interest_file])
+	        #wq.enqueue([x+1, 'LOG', 'interest', i, interest_file])
 	        #wq.enqueue([j, 'LOG', 'want', i, wf])
 	wq.enqueue([x+1, 'LOG', 'compare', i, local_file, global_file, distance_file, piece_count_file])
 		

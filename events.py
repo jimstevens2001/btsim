@@ -141,17 +141,17 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			nodes[sending_node_id].curr_up[recieving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
-		print 'we are checking the interest dictionary for node ',sending_node_id
-		print 'this interest dictionary contains ',nodes[sending_node_id].interest
+		#print 'we are checking the interest dictionary for node ',sending_node_id
+		#print 'this interest dictionary contains ',nodes[sending_node_id].interest
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
-		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
+		#print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
-		print 'Want_pieces:',nodes[recieving_node_id].want_pieces
-		print 'Priority_List:',nodes[recieving_node_id].priority_list
-		print 'piece exchange recieving node id is: ',recieving_node_id
-		print 'receiving_node_id',recieving_node_id
-		print 'piece_index',piece_index
+		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
+		#print 'Priority_List:',nodes[recieving_node_id].priority_list
+		#print 'piece exchange recieving node id is: ',recieving_node_id
+		#print 'receiving_node_id',recieving_node_id
+		#print 'piece_index',piece_index
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -256,8 +256,8 @@ def exchange_round(event):
 	# Schedule the next log events
 	wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
-	wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
-	wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
 def finish_piece(event):
 	print 'FINISH PIECE REACHED'
@@ -267,10 +267,10 @@ def finish_piece(event):
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	print 'The finish piece recieving node is: ',recieving_node_id
-	print 'The finish piece sending node is: ',sending_node_id
-	print 'The piece being finished is: ',piece_id
-	print nodes[recieving_node_id].want_pieces
+	#print 'The finish piece recieving node is: ',recieving_node_id
+	#print 'The finish piece sending node is: ',sending_node_id
+	#print 'The piece being finished is: ',piece_id
+	#print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 

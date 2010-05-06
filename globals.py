@@ -5,7 +5,7 @@ from work_queue import WorkQueue
 GOSSIP = False
 
 # Constants
-NUM_PEERS=100
+NUM_NODES = 100
 MIN_PEERS = 5
 MAX_PEERS = 60
 DESIRED_PEERS = 30
@@ -42,7 +42,7 @@ piece_count_file = 'Records/piece_count_test'
 #peers_file = 'peers_record'
 #curr_down_file = 'curr_down_record'
 #curr_up_file = 'curr_up_record'
-interest_file = 'Records/interest_record_test'
-priority_file = 'Records/priority_record_test'
+#interest_file = 'Records/interest_record_test'
+#priority_file = 'Records/priority_record_test'
 #want_file = 'want_record'
 #======================================

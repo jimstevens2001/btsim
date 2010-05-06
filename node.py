@@ -10,6 +10,8 @@ class Node:
 	def __init__(self, node_id, selection, altruism, leave, have):
 		self.id = node_id
 
+		self.starting = 1
+
 		# Specify the bounds on the number of allowed peers.
 		self.min_peers = MIN_PEERS
 		self.max_peers = MAX_PEERS
@@ -336,7 +338,7 @@ class Node:
 		# First time we're here so random choice of piece
 		#print 'WE ARE AT FULL INTEREST UPDATE'
 		print 'We have ',self.have_pieces.keys()
-		if len(self.priority_list) == NUM_PIECES:
+		if self.starting == 1:
 			# keey track of which pieces we're getting so we don't get the same piece from two peers
 			temp_del = []
 			#print 'we have peered with ',temp_peers
@@ -354,19 +356,17 @@ class Node:
 							del temp_pieces[temp_del[k]]
 				if temp_pieces.keys() != []:
 					rand_piece =  random.choice(temp_pieces.keys())
-					print 'Our choices were ',temp_pieces.keys()
-					print 'We are getting a random piece of value: ',rand_piece
 					temp_del.append(rand_piece)
 					nodes[temp_peers[j]].interest[self.id] = rand_piece
 					self.priority_list.remove(rand_piece)
+			
+			self.starting = 0
 				
 					
 		else:
 			# clear our entry in all of our peers interest dictionaries because it might be out of date
 			# however, if the entry is a partially downloaded piece, instead remove that peer from
 			# temp_peers cause we don't want to touch that dictionary entry
-			test_out = open('full_interest_out', 'a')
-			test_out.write('Node '+str(self.id)+' is updating its interest library entries \n')
 			#test_out.write(str(temp_peers)+'\n')
 			
 			del_list = []
@@ -391,25 +391,19 @@ class Node:
 				
 			# go through the priority list and find out which peers have these pieces
 		
-			#test_out.write(str(temp_peers)+'\n')
-			test_out.write(' Peer : Piece \n')
 			temp_del2 = []
 			for i in range(len(self.priority_list)):
-				temp_del = NUM_PEERS+1
+				temp_del = NUM_NODES+1
 				for j in range(len(temp_peers)):
 					if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-						test_out.write(' '+str(nodes[temp_peers[j]].id)+' : '+str(self.priority_list[i])+'\n')
 						nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
 						temp_del = temp_peers[j]
-						test_out.write('the peer that was removed this round was '+str(nodes[temp_del].id)+'\n')
 						temp_del2.append(self.priority_list[i])
 						# break out of the loop cause we've found a peer for that piece
 						break
 				# remove the peer we found for this piece so we don't associate it with another piece
-				if temp_del != NUM_PEERS+1:
-					#test_out.write('we are deleting '+str(nodes[temp_del].id)+'\n')
+				if temp_del != NUM_NODES+1:
 					temp_peers.remove(temp_del)
-			test_out.write(str(temp_peers)+'\n')
 			# remove this piece from the list so we don't try to get it again
 			if temp_del2 != []:
 			        #print 'we are removing something from the priority list'
@@ -418,8 +412,6 @@ class Node:
 					self.priority_list.remove(temp_del2[i])	
 				        #print 'priority_list:',self.priority_list
 
-			test_out.write('\n')
-			test_out.close()
 		#print self.id
 		#print self.want_pieces
 		#print self.priority_list
