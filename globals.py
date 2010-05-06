@@ -1,8 +1,8 @@
 from work_queue import WorkQueue
 
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
 
 # Constants
 MIN_PEERS = 5
@@ -29,11 +29,11 @@ haves = {}
 # LOG FILES
 # would like to be set this from the command line
 # but its not necessary right now
-file_progress_file = 'Records/file_progress_record_500'
-local_file = 'Records/local_record_500'
-global_file = 'Records/global_record_500'
-distance_file = 'Records/distance_record_500'
-piece_count_file = 'Records/rarity_record_500'
+file_progress_file = 'Records/file_progress_record_50h'
+local_file = 'Records/local_record_50h'
+global_file = 'Records/global_record_50h'
+distance_file = 'Records/distance_record_50h'
+piece_count_file = 'Records/rarity_record_50h'
 
 #Disabled Logs
 #======================================
