@@ -1,10 +1,11 @@
 from work_queue import WorkQueue
 
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
 
 # Constants
+NUM_PEERS = 10
 MIN_PEERS = 5
 MAX_PEERS = 60
 DESIRED_PEERS = 30
@@ -14,7 +15,7 @@ STOP_TIME = 250
 NUM_SEEDS = 1 # number of seeds that we start with
 
 # File Parameters
-NUM_PIECES = 1000
+NUM_PIECES = 100
 PIECE_SIZE = 40 # in bits
 
 # Create the main event queue.
@@ -29,11 +30,11 @@ haves = {}
 # LOG FILES
 # would like to be set this from the command line
 # but its not necessary right now
-file_progress_file = 'Records/file_progress_record_500'
-local_file = 'Records/local_record_500'
-global_file = 'Records/global_record_500'
-distance_file = 'Records/distance_record_500'
-piece_count_file = 'Records/rarity_record_500'
+file_progress_file = 'Records/file_progress_test'
+local_file = 'Records/local_view_test'
+global_file = 'Records/global_view_test'
+distance_file = 'Records/distance_test'
+piece_count_file = 'Records/piece_count_test'
 
 #Disabled Logs
 #======================================
@@ -41,7 +42,7 @@ piece_count_file = 'Records/rarity_record_500'
 #peers_file = 'peers_record'
 #curr_down_file = 'curr_down_record'
 #curr_up_file = 'curr_up_record'
-#interest_file = 'interest_record'
-#priority_file = 'priority_record'
+interest_file = 'Records/interest_record_test'
+priority_file = 'Records/priority_record_test'
 #want_file = 'want_record'
 #======================================
