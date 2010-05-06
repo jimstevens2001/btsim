@@ -345,20 +345,25 @@ def log(event):
 		print peers
 	elif log_type == 'file_progress':
 		node_id = event[3]
-		if len(event) > 4:
-			tfile = event[4]
-			fpf = open(file_progress_file, 'a')
-			fpf.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
-			fpf.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
-			for i in nodes[node_id].have_pieces:
-				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
-			fpf.write('\n')
+		if nodes[node_id].count == 0:	
+			if len(event) > 4:
+				tfile = event[4]
+				fpf = open(file_progress_file, 'a')
+				fpf.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
+				fpf.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
+				for i in nodes[node_id].have_pieces:
+					fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
+				fpf.write('\n')
 			
-			fpf.close()
+				fpf.close()
+			else:
+				print 'Node ',node_id,'s File Progress:'
+				for i in nodes[node_id].have_pieces:
+					print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
+		elif nodes[node_id].count >= 19:
+			nodes[node_id].count = 0
 		else:
-			print 'Node ',node_id,'s File Progress:'
-			for i in nodes[node_id].have_pieces:
-				print 'Piece ',i,'was finished at ',nodes[node_id].have_pieces[i]
+			nodes[node_id].count = nodes[node_id].count + 1
 	elif log_type == 'node_peers':
 		node_id = event[3]
 		if len(event) > 4:
@@ -437,90 +442,96 @@ def log(event):
 				print '    ',i,' : ',nodes[node_id].want_pieces[i],' '
 	elif log_type == 'compare':
 		node_id = event[3]
-		# Determin the actual global priority for comparison purposes
-		global_priority_list = []
-		count_dict = {}
-		count_list = []
+		if nodes[node_id].count == 0:
+			# Determin the actual global priority for comparison purposes
+			global_priority_list = []
+			count_dict = {}
+			count_list = []
 
-		for i in range(NUM_PIECES):
-			# don't want to add pieces that are already in the interest dictionary
-			count_dict[i] = 0
-			for j in nodes.keys():
-				if i in nodes[j].have_pieces:
-					if i in count_dict:
-						count_dict[i] += 1
-					else:
-						count_dict[i] = 1
-			if i in count_dict:
-				count_list.append([count_dict[i], i])
-
-		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
-		global_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
-
-		local_priority_list = []
-		count_dict = {}
-		count_list = []
-
-		all_peers = nodes[node_id].peers.keys() + nodes[node_id].unchoked.keys()
-		for i in range(NUM_PIECES):
-			# don't want to add pieces that are already in the interest dictionary
-			count_dict[i] = 0
-			for j in all_peers:
-				if i in nodes[j].have_pieces:
-					if i in count_dict:
-						count_dict[i] += 1
-					else:
-						count_dict[i] = 1
-			if i in count_dict:
-				count_list.append([count_dict[i], i])			
-
-		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
-		local_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
-		if len(event) > 7:
-			lfile = event[4]
-			gfile = event[5]
-			dfile = event[6]
-			pfile = event[7]
-
-			locf = open(lfile, 'a')
-			globf = open(gfile, 'a')
-			distf = open(dfile, 'a')
-			pcf = open(pfile, 'a')
-
-			#record the count dictionary so we know the rarity of pieces
-			pcf.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
-			pcf.write('    Piece : Count \n') 
-			for i in count_dict:
-				pcf.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
-
-			globf.write('Global priority list at time '+str(time)+' is: \n')
-			for i in range(len(global_priority_list)):
-				globf.write(str(global_priority_list[i])+' ')
-			globf.write('\n')
-			globf.write('\n')
-			locf.write('Local priority list at time '+str(time)+' for node '+str(node_id)+' is: \n')
-			for i in range(len(local_priority_list)):
-				locf.write(str(local_priority_list[i])+' ')
-			locf.write('\n')
-			locf.write('\n')
-			distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
-			distance = 0
 			for i in range(NUM_PIECES):
-				if i in local_priority_list:
-					distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+				# don't want to add pieces that are already in the interest dictionary
+				count_dict[i] = 0
+				for j in nodes.keys():
+					if i in nodes[j].have_pieces:
+						if i in count_dict:
+							count_dict[i] += 1
+						else:
+							count_dict[i] = 1
+				if i in count_dict:
+					count_list.append([count_dict[i], i])
 
-			if len(local_priority_list) > 0:
-				distance = distance/len(local_priority_list)
-			else:
+			count_list.sort() # Sort least to greatest so the head is now the most rare pieces
+			global_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
+
+			local_priority_list = []
+			count_dict = {}
+			count_list = []
+
+			all_peers = nodes[node_id].peers.keys() + nodes[node_id].unchoked.keys()
+			for i in range(NUM_PIECES):
+				# don't want to add pieces that are already in the interest dictionary
+				count_dict[i] = 0
+				for j in all_peers:
+					if i in nodes[j].have_pieces:
+						if i in count_dict:
+							count_dict[i] += 1
+						else:
+							count_dict[i] = 1
+				if i in count_dict:
+					count_list.append([count_dict[i], i])			
+
+			count_list.sort() # Sort least to greatest so the head is now the most rare pieces
+			local_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
+			if len(event) > 7:
+				lfile = event[4]
+				gfile = event[5]
+				dfile = event[6]
+				pfile = event[7]
+
+				locf = open(lfile, 'a')
+				globf = open(gfile, 'a')
+				distf = open(dfile, 'a')
+				pcf = open(pfile, 'a')
+
+			        #record the count dictionary so we know the rarity of pieces
+				pcf.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
+				pcf.write('    Piece : Count \n') 
+				for i in count_dict:
+					pcf.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
+
+				globf.write('Global priority list at time '+str(time)+' is: \n')
+				for i in range(len(global_priority_list)):
+					globf.write(str(global_priority_list[i])+' ')
+				globf.write('\n')
+				globf.write('\n')
+				locf.write('Local priority list at time '+str(time)+' for node '+str(node_id)+' is: \n')
+				for i in range(len(local_priority_list)):
+					locf.write(str(local_priority_list[i])+' ')
+				locf.write('\n')
+				locf.write('\n')
+				distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
 				distance = 0
+				for i in range(NUM_PIECES):
+					if i in local_priority_list:
+						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+
+				if len(local_priority_list) > 0:
+					distance = distance/len(local_priority_list)
+				else:
+					distance = 0
 			       
-			distf.write('    '+str(distance)+' \n')
-			distf.write('\n')
+				distf.write('    '+str(distance)+' \n')
+				distf.write('\n')
 		
-			locf.close()
-			globf.close()
-			distf.close()
-			pcf.close()
+				locf.close()
+				globf.close()
+				distf.close()
+				pcf.close()
+	
+		elif nodes[node_id].count >= 19:
+			nodes[node_id].count = 0
+		else:
+			nodes[node_id].count = nodes[node_id].count + 1
 	elif log_type == 'interest_dict':
 		node_id = event[3]
 		print 'The interest dictionary for node ',node_id,' is '
