@@ -119,7 +119,6 @@ def remove_node(event):
 
 	print 'The number of remaining nodes is now ',len(nodes.keys())
 
-
 # This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
@@ -513,17 +512,43 @@ def log(event):
 			locf.write('\n')
 			distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
 			distance = 0
-			for i in range(NUM_PIECES):
-				if i in local_priority_list:
-					distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+			if DISTANCE_MODE == 'top_ten':
+				for i in range(10):
+					if i in local_priority_list:
+						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
 
-			if len(local_priority_list) > 0:
-				distance = distance/len(local_priority_list)
-			else:
-				distance = 0
+				if len(local_priority_list) > 0:
+					distance = distance/10
+				else:
+					distance = 0
 			       
-			distf.write('    '+str(distance)+' \n')
-			distf.write('\n')
+				distf.write('    '+str(distance)+' \n')
+				distf.write('\n')
+			elif DISTANCE_MODE == 'weighted':
+				for i in range(NUM_PIECES):
+					if i in local_priority_list:
+						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+						distance = distance / count_dict[i]
+
+				if len(local_priority_list) > 0:
+					distance = distance/len(local_priority_list)
+				else:
+					distance = 0
+			       
+				distf.write('    '+str(distance)+' \n')
+				distf.write('\n')
+			else:
+				for i in range(NUM_PIECES):
+					if i in local_priority_list:
+						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+
+				if len(local_priority_list) > 0:
+					distance = distance/len(local_priority_list)
+				else:
+					distance = 0
+			       
+				distf.write('    '+str(distance)+' \n')
+				distf.write('\n')
 		
 			locf.close()
 			globf.close()

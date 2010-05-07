@@ -95,7 +95,7 @@ for i in range(NUM_NODES):
 
 #wq.enqueue([10, 'LOG', 'interest_dict', 11])
 #wq.enqueue([150, 'LOG', 'interest_dict', 11])
-#wq.enqueue([900, 'KILL_SIM'])
+wq.enqueue([5000, 'KILL_SIM'])
 
 
 # Main queue loop
