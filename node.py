@@ -57,9 +57,13 @@ class Node:
 
 		self.never_unchoked = []
 
-		self.max_up = 100 # Default upload capacity
-		self.max_down = 100 # Default download capacity
-		self.remain_down = 100 # Download capacity not being used yet
+		# Default download capacity
+		self.max_down = int(random.betavariate(1.5, 5)*1000)
+
+		# Default upload capacity
+		self.max_up = int(self.max_down * random.uniform(0.5, 1.0))
+
+		self.remain_down = self.max_down # Download capacity not being used yet
 
 		self.curr_up = {} # Values to keep track of current upload resources being spent, indexed by node id
 		self.curr_down = {} # Values to keep track of current download resources being spent, indexed by node id
