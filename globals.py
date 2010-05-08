@@ -1,29 +1,42 @@
 from work_queue import WorkQueue
 
+# Simulation parameters
+
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
+
 #How gossip messages are generated and handled
 #Options: priority, peering, all
 GOSSIP_STYLE = 'priority'
+
+
+# Specify whether to use global knowledge or not
+GLOBAL_KNOWLEDGE = True
 
 # Distance Calculation
 #Options: normal, top_ten, weighted
 DISTANCE_MODE = 'normal'
 
-# Constants
+# Set altruism for leechers
+LEECHER_ALTRUISM = 'eternal_seed'
+#LEECHER_ALTRUISM = 'leave_on_complete'
+
+# Set number of nodes
 NUM_NODES = 50
+
+########################################################################################3
+
+# Constants
 MIN_PEERS = 5
 MAX_PEERS = 60
 DESIRED_PEERS = 30
-QUERY_TIME = 100
 ROUND_TIME = 10
-STOP_TIME = 250
-NUM_SEEDS = 1 # number of seeds that we start with
+NUM_SEEDS = 1
 
 # File Parameters
 NUM_PIECES = 1000
-PIECE_SIZE = 40 # in bits
+PIECE_SIZE = 40 # in KB
 
 # Create the main event queue.
 wq = WorkQueue()
@@ -31,8 +44,6 @@ wq = WorkQueue()
 # Create the main node dictionary.
 nodes = {}
 
-# Have lists of removed nodes
-haves = {}
 
 # LOG FILES
 # would like to be set this from the command line
@@ -44,13 +55,3 @@ distance_file = 'Records/distance_50globalh'
 piece_count_file = 'Records/piece_count__50globalh'
 
 
-#Disabled Logs
-#======================================
-#can_fill_file = 'can_fill_record'
-#peers_file = 'peers_record'
-#curr_down_file = 'curr_down_record'
-#curr_up_file = 'curr_up_record'
-#interest_file = 'Records/interest_record_test'
-#priority_file = 'Records/priority_record_test'
-#want_file = 'want_record'
-#======================================

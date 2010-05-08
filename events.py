@@ -16,28 +16,12 @@ class EventException(Exception): pass
 # Define event Handlers
 
 def add_node(event):
+	# Add the new node to the nodes dictionary.
 	node_id = event[2]
 	selection = event[3]
-
-	# Add the new node to the nodes dictionary.
-	# Fully definted node with have list and altruism
-	if len(event) >= 7:
-		have = event[6]
-		altruism = event[4]
-		leave_time = event[5]
-	# Node without a have list prespecified
-	elif len(event) >= 6:
-		# This node was previously deleted, set its have back to what it was
-		if node_id in haves.keys():
-			have = haves[node_id]
-		else:
-			have = {}
-		altruism = event[4]
-		leave_time = event[5]
-	else:
-		have = {}
-		altruism = 'eternal_seed'
-		leave_time = 0
+	leave_time = event[5]
+	altruism = event[4]
+	have = event[6]
 
 	nodes[node_id] = Node(node_id, selection, altruism, leave_time, have)
 
@@ -61,27 +45,23 @@ def remove_node(event):
 		if e[1] in ['REMOVE_NODE', 'EXCHANGE_ROUND']:
 			if e[2] == node_id:
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Special case for the finish_piece event to account for partial download
 		if e[1] == 'FINISH_PIECE':
 			if e[2] == node_id:
 				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Remove all events that use e[3] as a node_id
 		if e[1] in ['FINISH_PIECE']:
 			if e[3] == node_id:
 				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Remove logs that use node_id
 		if e[1] == 'LOG' and e[2] in ['file_progress', 'priority_queue', 'node_peers', 'curr_down', 'curr_up', 'interest', 'want', 'compare']:
 			if e[3] == node_id:
 				del_list.append(e)
-				#wq.remove_event(e)
 	for e in del_list:
 		wq.remove_event(e)
 			
@@ -90,40 +70,24 @@ def remove_node(event):
 	for i in nodes:
 		nodes[i].remove_peer(node_id) 
 
-	# save the nodes have and want lists
-	# we don't preserve who gave it to us
-	haves[node_id] = []
-	for i in range(NUM_PIECES):
-		if i in nodes[node_id].have_pieces.keys():
-			haves[node_id].append(PIECE_SIZE)
-		elif i in nodes[node_id].want_pieces.keys():
-			if nodes[node_id].want_pieces[i] < PIECE_SIZE:
-				haves[node_id].append(nodes[node_id].want_pieces[i])
-			else:
-				haves[node_id].append(0)
-		else:
-			haves[node_id].append(0)
-
-	#print nodes[node_id].have_pieces
-	#print haves[node_id]
 	
 	# remove the node from the node list
 	del nodes[node_id]
-	print 'Removed node',node_id,'at',event[0]
-	#print wq.get_queue()
-	#print
+
 
 	# Check to see if we're the last node in the swarm besides the starting seeds
 	if len(nodes.keys()) <= NUM_SEEDS: 
 		wq.enqueue([wq.cur_time, 'KILL_SIM'])
 
+
+	print 'Removed node',node_id,'at',event[0]
 	print 'The number of remaining nodes is now ',len(nodes.keys())
+
 
 # This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
-	print 'PIECE EXCHANGE IS CALLED'
 		
 	#print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
 	if nodes[sending_node_id].piece_selection == 'random':
@@ -140,17 +104,10 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			nodes[sending_node_id].curr_up[recieving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
-		#print 'we are checking the interest dictionary for node ',sending_node_id
-		#print 'this interest dictionary contains ',nodes[sending_node_id].interest
+		# We are checking the interest dictionary for node sending_node_id
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
-		#print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
-		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
-		#print 'Priority_List:',nodes[recieving_node_id].priority_list
-		#print 'piece exchange recieving node id is: ',recieving_node_id
-		#print 'receiving_node_id',recieving_node_id
-		#print 'piece_index',piece_index
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -174,7 +131,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 def exchange_round(event):
 	node_id = event[2]
 	
-	print "We are at the exchange round at time ",wq.cur_time
+	print 'Exchange round for node',node_id,'at time',wq.cur_time
 
 	# if our altruism setting is to leave at the end of the round after we've got the whole file
 	# then schedule the leave event and don't start any new uploads
@@ -194,11 +151,6 @@ def exchange_round(event):
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
-	#outf = open('out_file', 'a')
-	#outf.write('Node '+str(node_id)+' has Peers (4): '+str(nodes[node_id].peers)+'\n') 
-	#outf.write('Node '+str(node_id)+' has Unchoked (4): '+str(nodes[node_id].unchoked)+'\n')
-	#outf.write('\n')
-	#outf.close()
 
 	# generate the priority_list for our set of peers
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
@@ -206,14 +158,12 @@ def exchange_round(event):
 	# update the interest dictionary to reflect the new priority
 	nodes[node_id].update_full_interest()
 	
+	print 'interest',nodes[node_id].interest
+	print 'peers',nodes[node_id].peers
 
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
 
-	#print 'Node ',node_id,'has Peers (5):',nodes[node_id].peers 
-	#print 'Node ',node_id,'has Unchoked (5):',nodes[node_id].unchoked,'\n'
-	
-	#print 'Unchoked (in ER):',nodes[node_id].unchoked
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
 		#print 'we are preparing to send something to node ',i
@@ -241,9 +191,6 @@ def exchange_round(event):
 		up_rate = nodes[node_id].max_up / 5
 		transfer_rate =  min(remain_down, up_rate)
 
-		#print 'Unchoked(3):',nodes[node_id].unchoked
-		#print 'Interest',nodes[node_id].interest
-
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
 
@@ -259,17 +206,12 @@ def exchange_round(event):
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
 def finish_piece(event):
-	print 'FINISH PIECE REACHED'
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
 	recieving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	#print 'The finish piece recieving node is: ',recieving_node_id
-	#print 'The finish piece sending node is: ',sending_node_id
-	#print 'The piece being finished is: ',piece_id
-	#print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
@@ -298,9 +240,6 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 	# time =  the time now
 	# event_time = when the download was supposed to finish
 	# compute how much of the piece got downloaded
-	#print 'We are in partial download'
-	#print 'The receiving node id is: ',recieving_node_id
-	#print 'The sending node id is: ',sending_node_id
 	transfer_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 	total_time = PIECE_SIZE/transfer_rate
 	time_started = event_time - total_time
@@ -319,18 +258,15 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 		
 	else:
 		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
-	#print 'amount left was ',amount_left
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	#print wq.get_queue()
 	sys.exit(0)
 
 
 def log(event):
 	time = event[0]
 	log_type = event[2]
-	#print 'LOG Time=',time
 
 	if log_type == 'time':
 		pass
@@ -353,8 +289,9 @@ def log(event):
 			fpf = open(file_progress_file, 'a')
 			fpf.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
 			fpf.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
-			for i in nodes[node_id].have_pieces:
-				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
+			fpf.write(str(nodes[node_id].have_pieces))
+#			for i in nodes[node_id].have_pieces:
+#				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
 			fpf.write('\n')
 			
 			fpf.close()
@@ -564,7 +501,6 @@ def log(event):
 	else:
 		raise EventException('Invalid log_type')
 
-	#print
 	
 
 
@@ -575,7 +511,6 @@ handlers['ADD_NODE'] = add_node 		# Param: node_id, have_pieces
 handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, recieving node_id, piece_id, time_remaining
-#handlers['NEXT_DL'] = next_dl 			# used to schedule additional piece downloads on fast peers
 handlers['KILL_SIM'] = kill_sim			# No param
 handlers['LOG'] = log				# Param: log type
 

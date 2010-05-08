@@ -12,8 +12,6 @@ class Node:
 
 		self.starting = 1
 
-		self.globalknow = 1
-
 		# Specify the bounds on the number of allowed peers.
 		self.min_peers = MIN_PEERS
 		self.max_peers = MAX_PEERS
@@ -56,6 +54,8 @@ class Node:
 
 		self.op_unchoke = -1 # ID of current optimistically unchoked peer
 		self.op_unchoke_count = 0 # number of times we've tried to unchoke this peer, try 3 times then switch
+
+		self.never_unchoked = []
 
 		self.max_up = 100 # Default upload capacity
 		self.max_down = 100 # Default download capacity
@@ -100,10 +100,7 @@ class Node:
 		#copy the have list into the have_pieces dictionary
 		for i in range(len(have)):
 			if have[i] == PIECE_SIZE:
-				self.have_pieces[i] = 'recovered' # I hope this works
-
-		#print 'Node',self.id,'starts with'
-		#print self.have_pieces
+				self.have_pieces[i] = 0 
 
 
 	# Initialize the want_pieces dictionary
@@ -120,17 +117,11 @@ class Node:
 			else:
 				self.want_pieces[i] = PIECE_SIZE
 		
-		#if self.id == 2:
-			#print 'We are readding node 2'
-			#print have
-			#print self.have_pieces
-			#print self.want_pieces
-		
 		
 
 	def add_peer(self, node_id, time):
 		self.peers[node_id] = time
-		#self.curr_down[node_id] = 0
+		self.never_unchoked.append(node_id)
 
 	def remove_peer(self, node_id):
 		if node_id in self.peers:
@@ -140,6 +131,9 @@ class Node:
 			del self.unchoked[node_id]
 			if self.op_unchoke == node_id:
 				self.op_unchoke_count = 0
+
+		if node_id in self.never_unchoked:
+			self.never_unchoked.remove(node_id)
 				
 		# also need to check the curr_up and curr_down dictionaries for this peer
 		if node_id in self.curr_up:
@@ -212,6 +206,16 @@ class Node:
 		#print 'peers for node',self.id,'at time',wq.cur_time
 		#print
 
+
+	def unchoke(self, node_id):
+		if node_id not in self.peers:
+			raise Exception('Attempted to unchoke a node that is not in peers list.')
+		else:
+			self.unchoked[node_id] = self.peers[node_id]
+			del self.peers[node_id]
+			if node_id in self.never_unchoked:
+				self.never_unchoked.remove(node_id)
+
 	
 	# unchoking process
 	# there might be a much simpler way to do this, I was really tired when I wrote it
@@ -251,8 +255,9 @@ class Node:
 		# update unchoked set with the new top four peers or however many we have
 		for i in range(len(unchoke_list)):
 			id = unchoke_list[i][1]
-			self.unchoked[id] = self.peers[id]
-			del self.peers[id]
+			self.unchoke(id)
+#			self.unchoked[id] = self.peers[id]
+#			del self.peers[id]
 
 		#print 'Unchoked:',self.unchoked
 
@@ -264,14 +269,21 @@ class Node:
 
 		# if it wasn't picked, put it back into unchoked
 		if self.op_unchoke_count != 0:
-			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
-			del self.peers[self.op_unchoke]
+			self.unchoke(self.op_unchoke)
+#			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
+#			del self.peers[self.op_unchoke]
 
 		#print 'Node ',self.id,'has Peers (7):',self.peers
 		#print 'Node ',self.id,'has Unchoked (7):',self.unchoked,'\n'
 
 		# take care of the optimistic unchoke
 		self.update_op_unchoke()
+
+		# Remove all unchoked node_ids from the never_unchoked list
+		print 'node_id',self.id
+		print 'never',self.never_unchoked
+		print 'unchoked',self.unchoked.keys()
+
 
 	# Pick the node to be optimistically unchoked.
 	def update_op_unchoke(self):	
@@ -305,25 +317,28 @@ class Node:
 				# Create a new list of the keys of the peers list
 				op_unchoke_list = []
 
-				for i in self.peers:
-					if i in self.interest.keys():
-						op_unchoke_list.append([self.peers[i], i])
+				op_unchoke_list = self.peers.keys() + self.never_unchoked * 2
 
-				op_unchoke_list.sort()
-				op_unchoke_list.reverse()
-
-				# Add the newest peers in the op_unchoke_list an extra two times
-				# so they are three times more likely to be picked
-				new_list = op_unchoke_list[0:3]
-				op_unchoke_list += new_list*2
+#				for i in self.peers:
+#					if i in self.interest.keys():
+#						op_unchoke_list.append([self.peers[i], i])
+#
+#				op_unchoke_list.sort()
+#				op_unchoke_list.reverse()
+#
+#				# Add the newest peers in the op_unchoke_list an extra two times
+#				# so they are three times more likely to be picked
+#				new_list = op_unchoke_list[0:3]
+#				op_unchoke_list += new_list*2
 
 				if len(op_unchoke_list) > 0:
 					temp = random.choice(op_unchoke_list)
 				
-					self.op_unchoke = temp[1] # should be a node_id
+					self.op_unchoke = temp # should be a node_id
 
-					self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
-					del self.peers[self.op_unchoke]
+					self.unchoke(self.op_unchoke)
+#					self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
+#					del self.peers[self.op_unchoke]
 
 					self.op_unchoke_count = 1
 				# if we have no peers to make the op_unchoke just set the unchoke_count to 0 and 
@@ -351,27 +366,29 @@ class Node:
 
 		# First time we're here so random choice of piece
 		print 'WE ARE AT FULL INTEREST UPDATE'
-		print 'We have ',self.have_pieces.keys()
+		#print 'We have ',self.have_pieces.keys()
 		print 'starting is ',self.starting
-		print 'gossip is ',GOSSIP,' and style is ',GOSSIP_STYLE
+		#print 'gossip is ',GOSSIP,' and style is ',GOSSIP_STYLE
 		if self.starting == 1:
 			# keey track of which pieces we're getting so we don't get the same piece from two peers
 			temp_del = []
 			#print 'we have peered with ',temp_peers
 			for j in range(len(temp_peers)):
-				# pick a random piece that this peer has to download
+
+				# Get all of the pieces that this peer has.
 				temp_pieces = {}
 				for k in nodes[temp_peers[j]].have_pieces.keys():
 					temp_pieces[k] = nodes[temp_peers[j]].have_pieces[k]
 
+				# Remove all fo the pieces that we have already scheduled to other peers.
 				if temp_del != []:
-					#print 'our temp_pieces were',temp_pieces
-					#print 'the del list was ',temp_del
 					for k in range(len(temp_del)):
 						if temp_del[k] in temp_pieces.keys():
 							del temp_pieces[temp_del[k]]
+
+				# Pick a random piece that this peer has to download
 				if temp_pieces.keys() != []:
-					rand_piece =  random.choice(temp_pieces.keys())
+					rand_piece = random.choice(temp_pieces.keys())
 					temp_del.append(rand_piece)
 					nodes[temp_peers[j]].interest[self.id] = rand_piece
 					self.priority_list.remove(rand_piece)
@@ -459,11 +476,15 @@ class Node:
 			        # temp_peers cause we don't want to touch that dictionary entry
 			        #test_out.write(str(temp_peers)+'\n')
 			
+				# For each peer
 				del_list = []
 				for i in range(len(temp_peers)):
+					# If we are already interested in one of their pieces.
 					if self.id in nodes[temp_peers[i]].interest.keys():
+						# Get the piece id.
 						piece_index = nodes[temp_peers[i]].interest[self.id]
-				                #print nodes[temp_peers[i]].interest[self.id]
+
+						# If we still want the piece.
 						if piece_index in nodes[temp_peers[i]].want_pieces.keys():
 							if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
 								del nodes[temp_peers[i]].interest[self.id]
@@ -557,30 +578,26 @@ class Node:
 		self.priority_list = [] # clear the list cause the priority will change between rounds
 		count_dict = {}
 		count_list = []
-		all_peers = self.peers.keys() + self.unchoked.keys()
+
+		# If global 
+		if GLOBAL_KNOWLEDGE == 1:
+			all_peers = nodes.keys()
+		else:
+			all_peers = self.peers.keys() + self.unchoked.keys() + self.id
+
 		for i in self.want_pieces:
 			# don't want to add in flight pieces to the priority queue
 			if self.want_pieces[i] != 0:
 				# don't want to add pieces that are already in the interest dictionary
 				count_dict[i] = 0
-				if self.globalknow ==  1:
-					for j in nodes.keys():
-						if i in nodes[j].have_pieces:
-							if i in count_dict:
-								count_dict[i] += 1
-							else:
-								count_dict[i] = 1
-					if i in count_dict:
-						count_list.append([count_dict[i], i])
-				else:
-					for j in all_peers:
-						if i in nodes[j].have_pieces:
-							if i in count_dict:
-								count_dict[i] += 1
-							else:
-								count_dict[i] = 1
-					if i in count_dict:
-						count_list.append([count_dict[i], i])				
+				for j in all_peers:
+					if i in nodes[j].have_pieces:
+						if i in count_dict:
+							count_dict[i] += 1
+						else:
+							count_dict[i] = 1
+				if i in count_dict:
+					count_list.append([count_dict[i], i])				
 
 		count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 		self.priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
