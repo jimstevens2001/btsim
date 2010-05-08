@@ -58,10 +58,10 @@ class Node:
 		self.never_unchoked = []
 
 		# Default download capacity
-		self.max_down = int(random.betavariate(1.5, 5)*1000)
+		self.max_down = random.betavariate(1.5, 5)*1000
 
 		# Default upload capacity
-		self.max_up = int(self.max_down * random.uniform(0.5, 1.0))
+		self.max_up = self.max_down * random.uniform(0.5, 1.0)
 
 		self.remain_down = self.max_down # Download capacity not being used yet
 
@@ -286,9 +286,12 @@ class Node:
 		self.update_op_unchoke()
 
 		# Remove all unchoked node_ids from the never_unchoked list
+		print
 		print 'node_id',self.id
 		print 'never',self.never_unchoked
 		print 'unchoked',self.unchoked.keys()
+		print 'completed',len(self.have_pieces),'/',len(self.have_pieces)+len(self.want_pieces)
+		print
 
 
 	# Pick the node to be optimistically unchoked.
@@ -583,7 +586,7 @@ class Node:
 		if GLOBAL_KNOWLEDGE == 1:
 			all_peers = nodes.keys()
 		else:
-			all_peers = self.peers.keys() + self.unchoked.keys() + self.id
+			all_peers = self.peers.keys() + self.unchoked.keys() + [self.id]
 
 		for i in self.want_pieces:
 			# don't want to add in flight pieces to the priority queue

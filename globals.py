@@ -12,18 +12,20 @@ GOSSIP_STYLE = 'priority'
 
 
 # Specify whether to use global knowledge or not
-GLOBAL_KNOWLEDGE = True
+GLOBAL_KNOWLEDGE = False
+#GLOBAL_KNOWLEDGE = True
+
 
 # Distance Calculation
 #Options: normal, top_ten, weighted
 DISTANCE_MODE = 'normal'
 
 # Set altruism for leechers
-LEECHER_ALTRUISM = 'eternal_seed'
-#LEECHER_ALTRUISM = 'leave_on_complete'
+#LEECHER_ALTRUISM = 'eternal_seed'
+LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 50
+NUM_NODES = 20
 
 ########################################################################################3
 
