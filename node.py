@@ -206,10 +206,17 @@ class Node:
 		#print 'peers for node',self.id,'at time',wq.cur_time
 		#print
 
+	def choke(self, node_id):
+		if node_id not in self.unchoked:
+			raise Exception('Attempted to choke a node that is not in unchoked.')
+		else:
+			self.peers[node_id] = self.unchoked[node_id]
+			del self.unchoked[node_id]
+		
 
 	def unchoke(self, node_id):
 		if node_id not in self.peers:
-			raise Exception('Attempted to unchoke a node that is not in peers list.')
+			raise Exception('Attempted to unchoke a node that is not in peers.')
 		else:
 			self.unchoked[node_id] = self.peers[node_id]
 			del self.peers[node_id]
@@ -225,9 +232,8 @@ class Node:
 		#print 'Node ',self.id,'has Unchoked (6):',self.unchoked,'\n'
 
 		# Move all unchoked nodes back into the peers list.
-		for i in self.unchoked:
-			self.peers[i] = self.unchoked[i]
-		self.unchoked.clear()
+		for i in self.unchoked.keys():
+			self.choke(i)
 
 		# build the unchoke list for the peers we have
 		unchoke_list = []
@@ -256,8 +262,6 @@ class Node:
 		for i in range(len(unchoke_list)):
 			id = unchoke_list[i][1]
 			self.unchoke(id)
-#			self.unchoked[id] = self.peers[id]
-#			del self.peers[id]
 
 		#print 'Unchoked:',self.unchoked
 
@@ -270,8 +274,6 @@ class Node:
 		# if it wasn't picked, put it back into unchoked
 		if self.op_unchoke_count != 0:
 			self.unchoke(self.op_unchoke)
-#			self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
-#			del self.peers[self.op_unchoke]
 
 		#print 'Node ',self.id,'has Peers (7):',self.peers
 		#print 'Node ',self.id,'has Unchoked (7):',self.unchoked,'\n'
@@ -296,10 +298,11 @@ class Node:
 				self.op_unchoke_count = 0
 
 				# Move the op_unchoke back to the choked list.
-				self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
-				del self.unchoked[self.op_unchoke] # if he uploaded enough, he should get selected as
-				                                   # one of the four unchoked peers this round
+				# if he uploaded enough, he should get selected as
+				# one of the four unchoked peers this round
+				self.choke(self.op_unchoke)
 				self.op_unchoke = -1
+
 			# make sure the current optimistic unchoke is still interested
 			elif self.op_unchoke != -1:
 				if self.op_unchoke not in self.interest.keys():
@@ -308,8 +311,7 @@ class Node:
 
 						# Move the op_unchoke back to the choked list
 						#print 'Unchoked(4):',self.unchoked
-						self.peers[self.op_unchoke] = self.unchoked[self.op_unchoke]
-						del self.unchoked[self.op_unchoke]
+						self.choke(self.op_unchoke)
 						self.op_unchoke = -1
 
 
@@ -317,19 +319,17 @@ class Node:
 				# Create a new list of the keys of the peers list
 				op_unchoke_list = []
 
-				op_unchoke_list = self.peers.keys() + self.never_unchoked * 2
+				# For each peer that we are interested in.
+				for i in self.peers:
+					if i in self.interest.keys():
+						# Add them to the op_unchoke list.
+						op_unchoke_list.append(i)
+						if i in self.never_unchoked:
+							# Add two more times if they have never been unchoked.
+							op_unchoke_list.append(i)
+							op_unchoke_list.append(i)
+						
 
-#				for i in self.peers:
-#					if i in self.interest.keys():
-#						op_unchoke_list.append([self.peers[i], i])
-#
-#				op_unchoke_list.sort()
-#				op_unchoke_list.reverse()
-#
-#				# Add the newest peers in the op_unchoke_list an extra two times
-#				# so they are three times more likely to be picked
-#				new_list = op_unchoke_list[0:3]
-#				op_unchoke_list += new_list*2
 
 				if len(op_unchoke_list) > 0:
 					temp = random.choice(op_unchoke_list)
@@ -337,8 +337,6 @@ class Node:
 					self.op_unchoke = temp # should be a node_id
 
 					self.unchoke(self.op_unchoke)
-#					self.unchoked[self.op_unchoke] = self.peers[self.op_unchoke]
-#					del self.peers[self.op_unchoke]
 
 					self.op_unchoke_count = 1
 				# if we have no peers to make the op_unchoke just set the unchoke_count to 0 and 
@@ -464,11 +462,9 @@ class Node:
 						temp_peers.remove(temp_del)
 			        # remove this piece from the list so we don't try to get it again
 				if temp_del2 != []:
-			                #print 'we are removing something from the priority list'
+			                # we are removing something from the priority list
 					for i in range(len(temp_del2)):
-				                #print temp_del2[i]
 						self.priority_list.remove(temp_del2[i])	
-				                #print 'priority_list:',self.priority_list
 			else:
 				print 'NORMAL INTEREST UPDATE'
 				# clear our entry in all of our peers interest dictionaries because it might be out of date
