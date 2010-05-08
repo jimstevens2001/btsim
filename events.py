@@ -290,9 +290,9 @@ def log(event):
 			fpf = open(file_progress_file, 'a')
 			fpf.write('Node '+str(node_id)+'s File Progress at time '+str(time)+' is: \n')
 			fpf.write('Precentage complete: '+str(((len(nodes[node_id].have_pieces.keys())*100)/NUM_PIECES))+'%\n')
-			fpf.write(str(nodes[node_id].have_pieces))
-#			for i in nodes[node_id].have_pieces:
-#				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
+#			fpf.write(str(nodes[node_id].have_pieces))
+			for i in nodes[node_id].have_pieces:
+				fpf.write('    Piece '+str(i)+' was finished at '+str(nodes[node_id].have_pieces[i])+'\n')
 			fpf.write('\n')
 			
 			fpf.close()
