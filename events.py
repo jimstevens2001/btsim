@@ -92,7 +92,6 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
 		
-	#print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
 	if nodes[sending_node_id].piece_selection == 'random':
 		can_fill = []
 		for j in nodes[recieving_node_id].want_pieces.keys():
@@ -191,7 +190,7 @@ def exchange_round(event):
 
 
 		# let peers know that they're being uploaded to and how much
-		up_rate = nodes[node_id].max_up / 5
+		up_rate = nodes[node_id].max_up / len(nodes[node_id].unchoked)
 		transfer_rate =  min(remain_down, up_rate)
 
 		nodes[i].curr_down[node_id] = transfer_rate
@@ -208,6 +207,27 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
+
+
+
+	print
+	print 'node_id',nodes[node_id].id
+	print 'up/down:',nodes[node_id].max_down,'/',nodes[node_id].max_up
+	print 'never',nodes[node_id].never_unchoked
+	print 'unchoked',nodes[node_id].unchoked.keys()
+	print 'completed',len(nodes[node_id].have_pieces),'/',len(nodes[node_id].have_pieces)+len(nodes[node_id].want_pieces)
+	print 'interest',nodes[node_id].interest
+	print 'curr_up',nodes[node_id].curr_up
+	print 'curr_down',nodes[node_id].curr_down
+	print
+
+	cont = True
+	while (cont):
+		cmd = raw_input('>')
+		if cmd == '':
+			cont = False
+		else:
+			print eval(cmd)
 
 def finish_piece(event):
 	time = event[0]
