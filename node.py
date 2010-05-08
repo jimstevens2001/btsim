@@ -10,6 +10,9 @@ class Node:
 	def __init__(self, node_id, selection, altruism, leave, have):
 		self.id = node_id
 
+		# Save the start time for the node.
+		self.start_time = wq.cur_time
+
 		self.starting = 1
 
 		# Specify the bounds on the number of allowed peers.

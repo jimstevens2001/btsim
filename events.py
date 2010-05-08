@@ -37,6 +37,9 @@ def add_node(event):
 def remove_node(event):
 	node_id = event[2]
 
+	# Compute the total time this node executed.
+	run_time[node_id] = wq.cur_time - nodes[node_id].start_time
+
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
 	del_list = [] 
@@ -262,6 +265,11 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
+	print 'run_time:'
+	print run_time
+	values = [run_time[i] for i in run_time.keys()]
+	if len(values) > 0:
+		print 'Average',float(sum(values))/len(values)
 	sys.exit(0)
 
 
