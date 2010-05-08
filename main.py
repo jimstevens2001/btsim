@@ -22,6 +22,7 @@ locf = open(local_file, 'w')
 globf = open(global_file, 'w')
 distf = open(distance_file, 'w')
 pcf = open(piece_count_file, 'w')
+cdf = open(curr_down_file, 'w')
 
 
 # Close the output files that store the logs
@@ -30,6 +31,7 @@ locf.close()
 globf.close()
 distf.close()
 pcf.close()
+cdf.close()
 
 wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 

@@ -202,6 +202,7 @@ def exchange_round(event):
 	# Schedule the next log events
 	wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
+	wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
@@ -317,10 +318,12 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Node '+str(node_id)+'s Curr_down at time '+str(time)+' is: \n')
+			cdf = open(file, 'a')
+			cdf.write('Node '+str(node_id)+'s Curr_down at time '+str(time)+' is: \n')
 			for i in nodes[node_id].curr_down:
-				file.write('Peer '+str(i)+' is pushing '+str(nodes[node_id].curr_down[i])+'\n')
-			file.write('\n')
+				cdf.write('Peer '+str(i)+' is pushing '+str(nodes[node_id].curr_down[i])+'\n')
+			cdf.write('\n')
+			cdf.close()
 		else:
 			print 'Node ',node_id,'s Curr_down at time ',time,' is:'
 			for i in nodes[node_id].curr_down:
@@ -329,10 +332,12 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Node '+str(node_id)+'s Curr_up at time '+str(time)+' is: \n')
+			cuf = open(file, 'a')
+			cuf.write('Node '+str(node_id)+'s Curr_up at time '+str(time)+' is: \n')
 			for i in nodes[node_id].curr_up:
-				file.write('Peer '+str(i)+' is pulling '+str(nodes[node_id].curr_up[i])+'\n')
-			file.write('\n')
+				cuf.write('Peer '+str(i)+' is pulling '+str(nodes[node_id].curr_up[i])+'\n')
+			cuf.write('\n')
+			cuf.close()
 		else:
 			print 'Node ',node_id,'s Curr_up at time ',time,' is:'
 			for i in nodes[node_id].curr_up:

@@ -23,7 +23,7 @@ LEECHER_ALTRUISM = 'eternal_seed'
 #LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 50
+NUM_NODES = 20
 
 ########################################################################################3
 
@@ -48,10 +48,11 @@ nodes = {}
 # LOG FILES
 # would like to be set this from the command line
 # but its not necessary right now
-file_progress_file = 'Records/file_progress_50globalh'
-local_file = 'Records/local_view_50globalh'
-global_file = 'Records/global_view_50globalh'
-distance_file = 'Records/distance_50globalh'
-piece_count_file = 'Records/piece_count__50globalh'
+file_progress_file = 'Records/file_progress_20globalh'
+local_file = 'Records/local_view_20globalh'
+global_file = 'Records/global_view_20globalh'
+distance_file = 'Records/distance_20globalh'
+piece_count_file = 'Records/piece_count__20globalh'
+curr_down_file = 'Records/curr_down_test'
 
 
