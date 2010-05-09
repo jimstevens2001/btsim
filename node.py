@@ -376,6 +376,7 @@ class Node:
 					rand_piece = random.choice(temp_pieces.keys())
 					temp_del.append(rand_piece)
 					nodes[temp_peers[j]].interest[self.id] = rand_piece
+					self.requested[temp_peers[j]] = rand_piece
 					self.priority_list.remove(rand_piece)
 			
 			self.starting = 0
@@ -418,6 +419,7 @@ class Node:
 							print 'Searching the gossip list'
 							if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
 								nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
+								self.requested[temp_peers[j]] = self.gossip_rare[i][1]
 								temp_del = temp_peers[j]
 								temp_del2.append(self.gossip_rare[i])
 								temp_del3.append(self.gossip_rare[i][1])
@@ -493,6 +495,7 @@ class Node:
 					for j in range(len(temp_peers)):
 						if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
 							nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
+							self.requested[temp_peers[j]] = self.priority_list[i]
 							temp_del = temp_peers[j]
 							temp_del2.append(self.priority_list[i])
 						        # break out of the loop cause we've found a peer for that piece
@@ -511,17 +514,24 @@ class Node:
 			done = 0
 			# scan through the top five entries in our gossiped rare list and see if this peer has any of them
 			temp_del = NUM_PIECES+1
+			temp_del2 = NUM_PIECES+1
 			for i in range(5):
 				if i < len(self.gossip_rare):
 					if self.gossip_rare[i][1] in nodes[peer].have_pieces:
 						nodes[peer].interest[self.id] = self.gossip_rare[i][1]
-						temp_del = self.gossip_rare[i][1]
+						temp_del = self.gossip_rare[i]
+						temp_del2 = self.gossip_rare[i][1]
 						done = 1
 						break
 			if temp_del != NUM_PIECES+1:
 				self.gossip_rare.remove(temp_del)
 				# also remove this from the priority list cause we're getting it
-				self.priority_list.remove(temp_del)
+				print 'priority list is: ', self.priority_list
+				print 'thing we are trying to delete is: ',temp_del2
+				print 'things we have: ',self.have_pieces
+				print 'things we want: ',self.want_pieces
+				print 'things we have requested; ',self.requested
+				self.priority_list.remove(temp_del2)
 						
 			# if we didn't find anything
 			if done == 0:
@@ -530,6 +540,7 @@ class Node:
 				for i in range(len(self.priority_list)):
 					if self.priority_list[i] in nodes[peer].have_pieces:
 						nodes[peer].interest[self.id] = self.priority_list[i]
+						self.requested[peer] = self.priority_list[i]
 						temp_del =  self.priority_list[i]
 						break
 				if temp_del != NUM_PIECES+1:
@@ -543,6 +554,7 @@ class Node:
 			for i in range(len(self.priority_list)):
 				if self.priority_list[i] in nodes[peer].have_pieces:
 					nodes[peer].interest[self.id] = self.priority_list[i]
+					self.requested[peer] = self.priority_list[i]
 					temp_del =  self.priority_list[i]
 					break
 			if temp_del != NUM_PIECES+1:

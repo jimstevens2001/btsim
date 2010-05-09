@@ -239,6 +239,10 @@ def finish_piece(event):
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
+	#also we want to remove it from our gossiped global rare queue
+	if piece_id in nodes[recieving_node_id].gossip_rare:
+		 nodes[recieving_node_id].gossip_rare.remove(piece_id)
+
 	# Update the interest dictionary
 	nodes[recieving_node_id].update_interest(sending_node_id)
 
