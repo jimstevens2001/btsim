@@ -372,8 +372,8 @@ class Node:
 		# First time we're here so random choice of piece
 		print 'WE ARE AT FULL INTEREST UPDATE'
 		#print 'We have ',self.have_pieces.keys()
-		print 'starting is ',self.starting
-		#print 'gossip is ',GOSSIP,' and style is ',GOSSIP_STYLE
+		#print 'starting is ',self.starting
+		print 'gossip is ',GOSSIP,' and style is ',GOSSIP_STYLE
 		if self.starting == 1:
 			# keey track of which pieces we're getting so we don't get the same piece from two peers
 			temp_del = []
@@ -402,7 +402,7 @@ class Node:
 				
 		       		
 		else:
-			if GOSSIP == 'True' and GOSSIP_STYLE == 'priority':
+			if GOSSIP == True and GOSSIP_STYLE == 'priority':
 			        # clear our entry in all of our peers interest dictionaries because it might be out of date
 			        # however, if the entry is a partially downloaded piece, instead remove that peer from
 			        # temp_peers cause we don't want to touch that dictionary entry
@@ -431,15 +431,17 @@ class Node:
 
 				# go through the gossiped rare list and find out which peers (if any) have these pieces
 				temp_del2 = []
+				temp_del3 = []
 				for i in range(5):
 					temp_del = NUM_NODES+1
 					for j in range(len(temp_peers)):
 						if i < len(self.gossip_rare):
 							print 'Searching the gossip list'
-							if self.gossip_rare[i][1] in nodes[peer].have_pieces:
-								nodes[peer].interest[self.id] = self.gossip_rare[i][1]
-								temp_del = self.gossip_rare[i][1]
-								temp_del2.append(self.gossip_rare[i][1])
+							if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
+								nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
+								temp_del = temp_peers[j]
+								temp_del2.append(self.gossip_rare[i])
+								temp_del3.append(self.gossip_rare[i][1])
 								break
 					if temp_del != NUM_NODES+1:
 						temp_peers.remove(temp_del)
@@ -451,7 +453,9 @@ class Node:
 						print 'ACTUALLY FOUND SOMETHING IN RARE_LIST'
 						self.gossip_rare.remove(temp_del2[i])
 						# also remove this from the priority list cause we're getting it
-						self.priority_list.remove(temp_del2[i])
+						print 'priority list is: ', self.priority_list
+						print 'thing we are trying to delete is: ',temp_del3[i]
+						self.priority_list.remove(temp_del3[i])
 				
 		                # go through the priority list and find out which peers have these pieces	
 				temp_del2 = []
