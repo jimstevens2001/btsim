@@ -12,8 +12,8 @@ GOSSIP_STYLE = 'priority'
 
 
 # Specify whether to use global knowledge or not
-GLOBAL_KNOWLEDGE = False
-#GLOBAL_KNOWLEDGE = True
+#GLOBAL_KNOWLEDGE = False
+GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
@@ -25,7 +25,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 20
+NUM_NODES = 10
 
 ########################################################################################3
 
@@ -46,6 +46,8 @@ wq = WorkQueue()
 # Create the main node dictionary.
 nodes = {}
 
+# Create the run times dictionary.
+run_time = {}
 
 # LOG FILES
 # would like to be set this from the command line
