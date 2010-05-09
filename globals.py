@@ -12,8 +12,8 @@ GOSSIP_STYLE = 'priority'
 
 
 # Specify whether to use global knowledge or not
-#GLOBAL_KNOWLEDGE = False
-GLOBAL_KNOWLEDGE = True
+GLOBAL_KNOWLEDGE = False
+#GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
@@ -58,5 +58,6 @@ global_file = 'Records/global_view_20globalh'
 distance_file = 'Records/distance_20globalh'
 piece_count_file = 'Records/piece_count__20globalh'
 curr_down_file = 'Records/curr_down_test'
+priority_list_file = 'Records/priority_list_test'
 
 

@@ -378,6 +378,8 @@ class Node:
 					nodes[temp_peers[j]].interest[self.id] = rand_piece
 					self.requested[temp_peers[j]] = rand_piece
 					self.priority_list.remove(rand_piece)
+					if rand_piece in self.gossip_rare:
+						self.gossip_rare.remove(rand_piece)
 			
 			self.starting = 0
 				
@@ -519,6 +521,7 @@ class Node:
 				if i < len(self.gossip_rare):
 					if self.gossip_rare[i][1] in nodes[peer].have_pieces:
 						nodes[peer].interest[self.id] = self.gossip_rare[i][1]
+						self.requested[peer] = self.gossip_rare[i][1]
 						temp_del = self.gossip_rare[i]
 						temp_del2 = self.gossip_rare[i][1]
 						done = 1
@@ -526,6 +529,7 @@ class Node:
 			if temp_del != NUM_PIECES+1:
 				self.gossip_rare.remove(temp_del)
 				# also remove this from the priority list cause we're getting it
+				print 'This node is: ',self.id
 				print 'priority list is: ', self.priority_list
 				print 'thing we are trying to delete is: ',temp_del2
 				print 'things we have: ',self.have_pieces
@@ -700,7 +704,8 @@ class Node:
 				#temporary dictionary of gossiped pieces
 				temp_dict = {}
 				for i in self.gossip_rare:
-					temp_dict[i[1]] = i[0]
+					if i[1] in self.priority_list:
+						temp_dict[i[1]] = i[0]
 
 				#clear the gossip_rare list, we're about to rebuild it
 				self.gossip_rare = []
@@ -710,15 +715,14 @@ class Node:
 				#most rare =  count + 1.3, second most rare = count + 1.2, etc
 				count = 1.3
 				for i in msg[2]:
-					# don't add it to the rarest list if we have it
+					# don't add it to the rarest list if we have already requested or gotten it from someone
+					# in which case it would no longer be in the priority queue
 					# ** In the all implementation  of gossip the else of this if should be an attempt to peer **
-					if i not in self.have_pieces.keys():
-						# don't add it to the rarest list if its in flight to us
-						if self.want_pieces[i] != 0:
-							if i in temp_dict.keys():
-								temp_dict[i] = temp_dict[i] + count
-							else:
-								temp_dict[i] = count
+					if i in self.priority_list:
+						if i in temp_dict.keys():
+							temp_dict[i] = temp_dict[i] + count
+						else:
+							temp_dict[i] = count
 					count = count - 0.1
 
 				#rebuild the gossip_rare list

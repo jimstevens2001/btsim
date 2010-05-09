@@ -147,8 +147,8 @@ def exchange_round(event):
 		elif nodes[node_id].altruism == 'leave_time_after_complete':
 			wq.enqueue([wq.cur_time + nodes[node_id].leave_time, 'REMOVE_NODE', node_id])
 
-	# Run the gossip protocol
-	if GOSSIP:
+	# Run the gossip protocol for peering
+	if GOSSIP and GOSSIP_STYLE == 'peering':
 		nodes[node_id].gossip()
 
 	# if we need more peers, get them
@@ -159,6 +159,10 @@ def exchange_round(event):
 
 	# update the interest dictionary to reflect the new priority
 	nodes[node_id].update_full_interest()
+
+	# Run the gossip protocol for peering
+	if GOSSIP and GOSSIP_STYLE == 'priority':
+		nodes[node_id].gossip()
 	
 	print 'interest',nodes[node_id].interest
 	print 'peers',nodes[node_id].peers
@@ -205,7 +209,7 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
-	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
+	wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_list_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
 
@@ -239,9 +243,15 @@ def finish_piece(event):
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
-	#also we want to remove it from our gossiped global rare queue
-	if piece_id in nodes[recieving_node_id].gossip_rare:
-		 nodes[recieving_node_id].gossip_rare.remove(piece_id)
+	# make sure this piece isn't still somehow in the global rare list
+	for i in range(len(nodes[recieving_node_id].gossip_rare)):
+		if nodes[recieving_node_id].gossip_rare[i][1] == piece_id:
+			del nodes[recieving_node_id].gossip_rare[i]
+			break # list should only have one entry per piece, if this isn't true we have bigger problems
+ 
+	# Check the gossip to see what's changed
+	if GOSSIP and GOSSIP_STYLE == 'priority':
+		nodes[recieving_node_id].gossip()
 
 	# Update the interest dictionary
 	nodes[recieving_node_id].update_interest(sending_node_id)
