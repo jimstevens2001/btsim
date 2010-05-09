@@ -25,7 +25,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 10
+NUM_NODES = 100
 
 ########################################################################################3
 

@@ -210,24 +210,24 @@ def exchange_round(event):
 
 
 
-	print
-	print 'node_id',nodes[node_id].id
-	print 'up/down:',nodes[node_id].max_down,'/',nodes[node_id].max_up
-	print 'never',nodes[node_id].never_unchoked
-	print 'unchoked',nodes[node_id].unchoked.keys()
-	print 'completed',len(nodes[node_id].have_pieces),'/',len(nodes[node_id].have_pieces)+len(nodes[node_id].want_pieces)
-	print 'interest',nodes[node_id].interest
-	print 'curr_up',nodes[node_id].curr_up
-	print 'curr_down',nodes[node_id].curr_down
-	print
-
-	cont = True
-	while (cont):
-		cmd = raw_input('>')
-		if cmd == '':
-			cont = False
-		else:
-			print eval(cmd)
+#	print
+#	print 'node_id',nodes[node_id].id
+#	print 'up/down:',nodes[node_id].max_down,'/',nodes[node_id].max_up
+#	print 'never',nodes[node_id].never_unchoked
+#	print 'unchoked',nodes[node_id].unchoked.keys()
+#	print 'completed',len(nodes[node_id].have_pieces),'/',len(nodes[node_id].have_pieces)+len(nodes[node_id].want_pieces)
+#	print 'interest',nodes[node_id].interest
+#	print 'curr_up',nodes[node_id].curr_up
+#	print 'curr_down',nodes[node_id].curr_down
+#	print
+#
+#	cont = True
+#	while (cont):
+#		cmd = raw_input('>')
+#		if cmd == '':
+#			cont = False
+#		else:
+#			print eval(cmd)
 
 def finish_piece(event):
 	time = event[0]
