@@ -17,7 +17,7 @@ wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list])
 
 # Open the output files to store the logs
 # This just creates the files that are then appended to by the log events
-#fpf = open(file_progress_file, 'w')
+fpf = open(file_progress_file, 'w')
 locf = open(local_file, 'w')
 globf = open(global_file, 'w')
 distf = open(distance_file, 'w')
@@ -27,7 +27,7 @@ plf = open(priority_list_file, 'w')
 
 
 # Close the output files that store the logs
-#fpf.close()
+fpf.close()
 locf.close()
 globf.close()
 distf.close()
