@@ -477,20 +477,17 @@ def log(event):
 				dfile = event[6]
 				pfile = event[7]
 
-<<<<<<< HEAD:events.py
 				locf = open(lfile, 'a')
 				globf = open(gfile, 'a')
 				distf = open(dfile, 'a')
 				pcf = open(pfile, 'a')
 
-<<<<<<< HEAD:events.py
 			        #record the count dictionary so we know the rarity of pieces
 				pcf.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
 				pcf.write('    Piece : Count \n') 
 				for i in count_dict:
 					pcf.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
 
-<<<<<<< HEAD:events.py
 				globf.write('Global priority list at time '+str(time)+' is: \n')
 				for i in range(len(global_priority_list)):
 					globf.write(str(global_priority_list[i])+' ')
