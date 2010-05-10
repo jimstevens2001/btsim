@@ -362,6 +362,52 @@ class Node:
 		for i in range(len(del_list)):
 			temp_peers.remove(del_list[i])
 
+	# Function to scan through the priority list
+	def priority_scan(self, temp_peers):
+		temp_del2 = []
+		for i in range(len(self.priority_list)):
+			temp_del = NUM_NODES+1
+			for j in range(len(temp_peers)):
+				if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
+					nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
+					temp_del = temp_peers[j]
+					temp_del2.append(self.priority_list[i])
+				        # break out of the loop cause we've found a peer for that piece
+					break
+			# remove the peer we found for this piece so we don't associate it with another piece
+			if temp_del != NUM_NODES+1:
+				temp_peers.remove(temp_del)
+		# remove this piece from the list so we don't try to get it again
+		if temp_del2 != []:
+		        # we are removing something from the priority list
+			for i in range(len(temp_del2)):
+				self.priority_list.remove(temp_del2[i])	
+
+	# Function to scan through the gossip list
+	def gossip_scan(self, temp_peers):
+		# go through the gossiped rare list and find out which peers (if any) have these pieces
+		temp_del2 = []
+		temp_del3 = []
+		for i in range(len(self.gossip_rare)):
+			temp_del = NUM_NODES+1
+			for j in range(len(temp_peers)):
+				if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
+					nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
+					self.requested[temp_peers[j]] = self.gossip_rare[i][1]
+					temp_del = temp_peers[j]
+					temp_del2.append(self.gossip_rare[i])
+					temp_del3.append(self.gossip_rare[i][1])
+					break
+			if temp_del != NUM_NODES+1:
+				temp_peers.remove(temp_del)
+
+		# remove this piece from the list so we don't try to get it again
+		if temp_del2 != []:
+			for i in range(len(temp_del2)):
+				self.gossip_rare.remove(temp_del2[i])
+				# also remove this from the priority list cause we're getting it
+				self.priority_list.remove(temp_del3[i])
+
 
 	# Update our entry in the interest dictionaries of our peers
 	# This should be called whenever a peer is added or an exchange round begins
@@ -416,48 +462,12 @@ class Node:
 				# clean up the temp peeers dictionary
 				self.clean_temp_peers(temp_peers)
 				
-				# go through the gossiped rare list and find out which peers (if any) have these pieces
-				temp_del2 = []
-				temp_del3 = []
-				for i in range(len(self.gossip_rare)):
-					temp_del = NUM_NODES+1
-					for j in range(len(temp_peers)):
-						if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
-							nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
-							self.requested[temp_peers[j]] = self.gossip_rare[i][1]
-							temp_del = temp_peers[j]
-							temp_del2.append(self.gossip_rare[i])
-							temp_del3.append(self.gossip_rare[i][1])
-							break
-					if temp_del != NUM_NODES+1:
-						temp_peers.remove(temp_del)
+				# scan through the gossiped priority list and see if we can get one of those pieces from this peer
+				self.gossip_scan(temp_peers)
 
-				# remove this piece from the list so we don't try to get it again
-				if temp_del2 != []:
-					for i in range(len(temp_del2)):
-						self.gossip_rare.remove(temp_del2[i])
-						# also remove this from the priority list cause we're getting it
-						self.priority_list.remove(temp_del3[i])
+				# scan through our priority list and find the next thing that this peer has that we want
+				self.priority_scan(temp_peers)
 				
-		                # go through the priority list and find out which peers have these pieces	
-				temp_del2 = []
-				for i in range(len(self.priority_list)):
-					temp_del = NUM_NODES+1
-					for j in range(len(temp_peers)):
-						if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-							nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-							temp_del = temp_peers[j]
-							temp_del2.append(self.priority_list[i])
-						        # break out of the loop cause we've found a peer for that piece
-							break
-				        # remove the peer we found for this piece so we don't associate it with another piece
-					if temp_del != NUM_NODES+1:
-						temp_peers.remove(temp_del)
-			        # remove this piece from the list so we don't try to get it again
-				if temp_del2 != []:
-			                # we are removing something from the priority list
-					for i in range(len(temp_del2)):
-						self.priority_list.remove(temp_del2[i])	
 			else:
 				print 'NORMAL INTEREST UPDATE'
 				# clear our entry in all of our peers interest dictionaries because it might be out of date
@@ -469,70 +479,28 @@ class Node:
 				self.clean_temp_peers(temp_peers)
 				
 				# go through the priority list and find out which peers have these pieces
-				temp_del2 = []
-				for i in range(len(self.priority_list)):
-					temp_del = len(temp_peers)+1
-					for j in range(len(temp_peers)):
-						if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-							nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-							temp_del = temp_peers[j]
-							temp_del2.append(self.priority_list[i])
-							# break out of the loop cause we've found a peer for that piece
-							break
-					# remove the peer we found for this piece so we don't associate it with another piece
-					if temp_del != len(temp_peers)+1:
-						temp_peers.remove(temp_del)
-				# remove this piece from the list so we don't try to get it again
-				if temp_del2 != []:
-					for i in range(len(temp_del2)):
-						self.priority_list.remove(temp_del2[i])	
+				self.priority_scan(temp_peers)
 
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):
 		if GOSSIP == True and GOSSIP_STYLE == 'priority':
-			done = 0
-			# scan through the top five entries in our gossiped rare list and see if this peer has any of them
-			temp_del = NUM_PIECES+1
-			temp_del2 = NUM_PIECES+1
-			for i in range(len(self.gossip_rare)):
-				if self.gossip_rare[i][1] in nodes[peer].have_pieces:
-					nodes[peer].interest[self.id] = self.gossip_rare[i][1]
-					self.requested[peer] = self.gossip_rare[i][1]
-					temp_del = self.gossip_rare[i]
-					temp_del2 = self.gossip_rare[i][1]
-					done = 1
-					break
-			if temp_del != NUM_PIECES+1:
-				self.gossip_rare.remove(temp_del)
-				# also remove this from the priority list cause we're getting it
-				self.priority_list.remove(temp_del2)
+			temp_peers = [peer]
+			# scan through the gossiped priority list and see if we can get one of those pieces from this peer
+			self.gossip_scan(temp_peers)
 						
 			# if we didn't find anything
-			if done == 0:
-			        # scan through our priority list and find the next thing that this peer has that we want
-				temp_del = NUM_PIECES+1
-				for i in range(len(self.priority_list)):
-					if self.priority_list[i] in nodes[peer].have_pieces:
-						nodes[peer].interest[self.id] = self.priority_list[i]
-						self.requested[peer] = self.priority_list[i]
-						temp_del =  self.priority_list[i]
-						break
-				if temp_del != NUM_PIECES+1:
-					self.priority_list.remove(temp_del)	
+			if temp_peers != []:
+				# scan through our priority list and find the next thing that this peer has that we want
+				self.priority_scan(temp_peers)
+
 			        # check to see if we actually updated the interest entry, if not delete it since they no longer have anything we want
 				if nodes[peer].interest[self.id] == NUM_PIECES+1:
 					del nodes[peer].interest[self.id]
 		else:
+			temp_peers = [peer]
 			# scan through our priority list and find the next thing that this peer has that we want
-			temp_del = NUM_PIECES+1
-			for i in range(len(self.priority_list)):
-				if self.priority_list[i] in nodes[peer].have_pieces:
-					nodes[peer].interest[self.id] = self.priority_list[i]
-					self.requested[peer] = self.priority_list[i]
-					temp_del =  self.priority_list[i]
-					break
-			if temp_del != NUM_PIECES+1:
-				self.priority_list.remove(temp_del)	
+			self.priority_scan(temp_peers)
+
 			# check to see if we actually updated the interest entry, if not delete it since they no longer have anything we want
 			if nodes[peer].interest[self.id] == NUM_PIECES+1:
 				del nodes[peer].interest[self.id]
