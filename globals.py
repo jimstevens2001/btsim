@@ -53,10 +53,10 @@ run_time = {}
 # LOG FILES
 # would like to be set this from the command line
 # but its not necessary right now
-file_progress_file = 'Records/file_progress_20globalh'
-local_file = 'Records/local_view_20globalh'
-global_file = 'Records/global_view_20globalh'
-distance_file = 'Records/distance_20globalh'
-piece_count_file = 'Records/piece_count__20globalh'
-curr_down_file = 'Records/curr_down_test'
-priority_list_file = 'Records/priority_list_test'
+file_progress_file = 'Records/file_progress_full_gossip_100u'
+local_file = 'Records/local_view_full_gossip_100u'
+global_file = 'Records/global_view_full_gossip_100u'
+distance_file = 'Records/distance_full_gossip_100u'
+piece_count_file = 'Records/piece_count_full_gossip_100u'
+curr_down_file = 'Records/curr_down_full_gossip_100u'
+priority_list_file = 'Records/priority_list_full_gossip_100u'

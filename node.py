@@ -417,18 +417,17 @@ class Node:
 				# go through the gossiped rare list and find out which peers (if any) have these pieces
 				temp_del2 = []
 				temp_del3 = []
-				for i in range(10):
+				for i in range(len(self.gossip_rare)):
 					temp_del = NUM_NODES+1
 					for j in range(len(temp_peers)):
-						if i < len(self.gossip_rare):
-							print 'Searching the gossip list'
-							if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
-								nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
-								self.requested[temp_peers[j]] = self.gossip_rare[i][1]
-								temp_del = temp_peers[j]
-								temp_del2.append(self.gossip_rare[i])
-								temp_del3.append(self.gossip_rare[i][1])
-								break
+						print 'Searching the gossip list'
+						if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
+							nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
+							self.requested[temp_peers[j]] = self.gossip_rare[i][1]
+							temp_del = temp_peers[j]
+							temp_del2.append(self.gossip_rare[i])
+							temp_del3.append(self.gossip_rare[i][1])
+							break
 					if temp_del != NUM_NODES+1:
 						temp_peers.remove(temp_del)
 
@@ -518,15 +517,14 @@ class Node:
 			# scan through the top five entries in our gossiped rare list and see if this peer has any of them
 			temp_del = NUM_PIECES+1
 			temp_del2 = NUM_PIECES+1
-			for i in range(10):
-				if i < len(self.gossip_rare):
-					if self.gossip_rare[i][1] in nodes[peer].have_pieces:
-						nodes[peer].interest[self.id] = self.gossip_rare[i][1]
-						self.requested[peer] = self.gossip_rare[i][1]
-						temp_del = self.gossip_rare[i]
-						temp_del2 = self.gossip_rare[i][1]
-						done = 1
-						break
+			for i in range(len(self.gossip_rare)):
+				if self.gossip_rare[i][1] in nodes[peer].have_pieces:
+					nodes[peer].interest[self.id] = self.gossip_rare[i][1]
+					self.requested[peer] = self.gossip_rare[i][1]
+					temp_del = self.gossip_rare[i]
+					temp_del2 = self.gossip_rare[i][1]
+					done = 1
+					break
 			if temp_del != NUM_PIECES+1:
 				self.gossip_rare.remove(temp_del)
 				# also remove this from the priority list cause we're getting it
