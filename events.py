@@ -16,28 +16,12 @@ class EventException(Exception): pass
 # Define event Handlers
 
 def add_node(event):
+	# Add the new node to the nodes dictionary.
 	node_id = event[2]
 	selection = event[3]
-
-	# Add the new node to the nodes dictionary.
-	# Fully definted node with have list and altruism
-	if len(event) >= 7:
-		have = event[6]
-		altruism = event[4]
-		leave_time = event[5]
-	# Node without a have list prespecified
-	elif len(event) >= 6:
-		# This node was previously deleted, set its have back to what it was
-		if node_id in haves.keys():
-			have = haves[node_id]
-		else:
-			have = {}
-		altruism = event[4]
-		leave_time = event[5]
-	else:
-		have = {}
-		altruism = 'eternal_seed'
-		leave_time = 0
+	leave_time = event[5]
+	altruism = event[4]
+	have = event[6]
 
 	nodes[node_id] = Node(node_id, selection, altruism, leave_time, have)
 
@@ -53,6 +37,9 @@ def add_node(event):
 def remove_node(event):
 	node_id = event[2]
 
+	# Compute the total time this node executed.
+	run_time[node_id] = wq.cur_time - nodes[node_id].start_time
+
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
 	del_list = [] 
@@ -61,27 +48,23 @@ def remove_node(event):
 		if e[1] in ['REMOVE_NODE', 'EXCHANGE_ROUND']:
 			if e[2] == node_id:
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Special case for the finish_piece event to account for partial download
 		if e[1] == 'FINISH_PIECE':
 			if e[2] == node_id:
 				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Remove all events that use e[3] as a node_id
 		if e[1] in ['FINISH_PIECE']:
 			if e[3] == node_id:
 				partial_download(wq.cur_time, e[0], e[2], e[3], e[4])
 				del_list.append(e)
-				#wq.remove_event(e)
 
 		# Remove logs that use node_id
 		if e[1] == 'LOG' and e[2] in ['file_progress', 'priority_queue', 'node_peers', 'curr_down', 'curr_up', 'interest', 'want', 'compare']:
 			if e[3] == node_id:
 				del_list.append(e)
-				#wq.remove_event(e)
 	for e in del_list:
 		wq.remove_event(e)
 			
@@ -90,33 +73,17 @@ def remove_node(event):
 	for i in nodes:
 		nodes[i].remove_peer(node_id) 
 
-	# save the nodes have and want lists
-	# we don't preserve who gave it to us
-	haves[node_id] = []
-	for i in range(NUM_PIECES):
-		if i in nodes[node_id].have_pieces.keys():
-			haves[node_id].append(PIECE_SIZE)
-		elif i in nodes[node_id].want_pieces.keys():
-			if nodes[node_id].want_pieces[i] < PIECE_SIZE:
-				haves[node_id].append(nodes[node_id].want_pieces[i])
-			else:
-				haves[node_id].append(0)
-		else:
-			haves[node_id].append(0)
-
-	#print nodes[node_id].have_pieces
-	#print haves[node_id]
 	
 	# remove the node from the node list
 	del nodes[node_id]
-	print 'Removed node',node_id,'at',event[0]
-	#print wq.get_queue()
-	#print
+
 
 	# Check to see if we're the last node in the swarm besides the starting seeds
 	if len(nodes.keys()) <= NUM_SEEDS: 
 		wq.enqueue([wq.cur_time, 'KILL_SIM'])
 
+
+	print 'Removed node',node_id,'at',event[0]
 	print 'The number of remaining nodes is now ',len(nodes.keys())
 
 
@@ -124,9 +91,7 @@ def remove_node(event):
 def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
-	print 'PIECE EXCHANGE IS CALLED'
 		
-	#print 'Piece selection routine is: ',nodes[sending_node_id].piece_selection
 	if nodes[sending_node_id].piece_selection == 'random':
 		can_fill = []
 		for j in nodes[recieving_node_id].want_pieces.keys():
@@ -141,17 +106,10 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			nodes[sending_node_id].curr_up[recieving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
-		#print 'we are checking the interest dictionary for node ',sending_node_id
-		#print 'this interest dictionary contains ',nodes[sending_node_id].interest
+		# We are checking the interest dictionary for node sending_node_id
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
-		#print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
-		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
-		#print 'Priority_List:',nodes[recieving_node_id].priority_list
-		#print 'piece exchange recieving node id is: ',recieving_node_id
-		#print 'receiving_node_id',recieving_node_id
-		#print 'piece_index',piece_index
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -175,7 +133,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 def exchange_round(event):
 	node_id = event[2]
 	
-	print "We are at the exchange round at time ",wq.cur_time
+	print 'Exchange round for node',node_id,'at time',wq.cur_time
 
 	# if our altruism setting is to leave at the end of the round after we've got the whole file
 	# then schedule the leave event and don't start any new uploads
@@ -189,32 +147,29 @@ def exchange_round(event):
 		elif nodes[node_id].altruism == 'leave_time_after_complete':
 			wq.enqueue([wq.cur_time + nodes[node_id].leave_time, 'REMOVE_NODE', node_id])
 
-	# Run the gossip protocol
-	if GOSSIP:
+	# Run the gossip protocol for peering
+	if GOSSIP and GOSSIP_STYLE == 'peering':
 		nodes[node_id].gossip()
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
-	#outf = open('out_file', 'a')
-	#outf.write('Node '+str(node_id)+' has Peers (4): '+str(nodes[node_id].peers)+'\n') 
-	#outf.write('Node '+str(node_id)+' has Unchoked (4): '+str(nodes[node_id].unchoked)+'\n')
-	#outf.write('\n')
-	#outf.close()
 
 	# generate the priority_list for our set of peers
 	nodes[node_id].sort_priority() # since we get new peers each round, this will also update the list each round
 
 	# update the interest dictionary to reflect the new priority
 	nodes[node_id].update_full_interest()
+
+	# Run the gossip protocol for peering
+	if GOSSIP and GOSSIP_STYLE == 'priority':
+		nodes[node_id].gossip()
 	
+	print 'interest',nodes[node_id].interest
+	print 'peers',nodes[node_id].peers
 
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
 
-	#print 'Node ',node_id,'has Peers (5):',nodes[node_id].peers 
-	#print 'Node ',node_id,'has Unchoked (5):',nodes[node_id].unchoked,'\n'
-	
-	#print 'Unchoked (in ER):',nodes[node_id].unchoked
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
 		#print 'we are preparing to send something to node ',i
@@ -239,11 +194,8 @@ def exchange_round(event):
 
 
 		# let peers know that they're being uploaded to and how much
-		up_rate = nodes[node_id].max_up / 5
+		up_rate = nodes[node_id].max_up / len(nodes[node_id].unchoked)
 		transfer_rate =  min(remain_down, up_rate)
-
-		#print 'Unchoked(3):',nodes[node_id].unchoked
-		#print 'Interest',nodes[node_id].interest
 
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
@@ -256,23 +208,50 @@ def exchange_round(event):
 	# Schedule the next log events
 	#wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
-	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
+	wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
+	wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_list_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
+
+
+	print
+	print 'node_id',nodes[node_id].id
+	print 'up/down:',nodes[node_id].max_down,'/',nodes[node_id].max_up
+	print 'never',nodes[node_id].never_unchoked
+	print 'unchoked',nodes[node_id].unchoked.keys()
+	print 'completed',len(nodes[node_id].have_pieces),'/',len(nodes[node_id].have_pieces)+len(nodes[node_id].want_pieces)
+#	print 'interest',nodes[node_id].interest
+	print 'curr_up',nodes[node_id].curr_up
+	print 'curr_down',nodes[node_id].curr_down
+	print
+#
+#	cont = True
+#	while (cont):
+#		cmd = raw_input('>')
+#		if cmd == '':
+#			cont = False
+#		else:
+#			print eval(cmd)
+
 def finish_piece(event):
-	print 'FINISH PIECE REACHED'
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
 	recieving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	#print 'The finish piece recieving node is: ',recieving_node_id
-	#print 'The finish piece sending node is: ',sending_node_id
-	#print 'The piece being finished is: ',piece_id
-	#print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
+
+	# make sure this piece isn't still somehow in the global rare list
+	for i in range(len(nodes[recieving_node_id].gossip_rare)):
+		if nodes[recieving_node_id].gossip_rare[i][1] == piece_id:
+			del nodes[recieving_node_id].gossip_rare[i]
+			break # list should only have one entry per piece, if this isn't true we have bigger problems
+ 
+	# Check the gossip to see what's changed
+	if GOSSIP and GOSSIP_STYLE == 'priority':
+		nodes[recieving_node_id].gossip()
 
 	# Update the interest dictionary
 	nodes[recieving_node_id].update_interest(sending_node_id)
@@ -299,9 +278,6 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 	# time =  the time now
 	# event_time = when the download was supposed to finish
 	# compute how much of the piece got downloaded
-	#print 'We are in partial download'
-	#print 'The receiving node id is: ',recieving_node_id
-	#print 'The sending node id is: ',sending_node_id
 	transfer_rate = nodes[sending_node_id].curr_up[recieving_node_id]
 	total_time = PIECE_SIZE/transfer_rate
 	time_started = event_time - total_time
@@ -320,18 +296,20 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 		
 	else:
 		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
-	#print 'amount left was ',amount_left
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	#print wq.get_queue()
+	print 'run_time:'
+	print run_time
+	values = [run_time[i] for i in run_time.keys()]
+	if len(values) > 0:
+		print 'Average',float(sum(values))/len(values)
 	sys.exit(0)
 
 
 def log(event):
 	time = event[0]
 	log_type = event[2]
-	#print 'LOG Time=',time
 
 	if log_type == 'time':
 		pass
@@ -386,10 +364,12 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Node '+str(node_id)+'s Curr_down at time '+str(time)+' is: \n')
+			cdf = open(file, 'a')
+			cdf.write('Node '+str(node_id)+'s Curr_down at time '+str(time)+' is: \n')
 			for i in nodes[node_id].curr_down:
-				file.write('Peer '+str(i)+' is pushing '+str(nodes[node_id].curr_down[i])+'\n')
-			file.write('\n')
+				cdf.write('Peer '+str(i)+' is pushing '+str(nodes[node_id].curr_down[i])+'\n')
+			cdf.write('\n')
+			cdf.close()
 		else:
 			print 'Node ',node_id,'s Curr_down at time ',time,' is:'
 			for i in nodes[node_id].curr_down:
@@ -398,10 +378,12 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Node '+str(node_id)+'s Curr_up at time '+str(time)+' is: \n')
+			cuf = open(file, 'a')
+			cuf.write('Node '+str(node_id)+'s Curr_up at time '+str(time)+' is: \n')
 			for i in nodes[node_id].curr_up:
-				file.write('Peer '+str(i)+' is pulling '+str(nodes[node_id].curr_up[i])+'\n')
-			file.write('\n')
+				cuf.write('Peer '+str(i)+' is pulling '+str(nodes[node_id].curr_up[i])+'\n')
+			cuf.write('\n')
+			cuf.close()
 		else:
 			print 'Node ',node_id,'s Curr_up at time ',time,' is:'
 			for i in nodes[node_id].curr_up:
@@ -470,7 +452,6 @@ def log(event):
 
 			count_list.sort() # Sort least to greatest so the head is now the most rare pieces
 			global_priority_list = [i[1] for i in count_list] # Put the piece numbers in order of rarity, into the priority_list
-
 			local_priority_list = []
 			count_dict = {}
 			count_list = []
@@ -496,17 +477,20 @@ def log(event):
 				dfile = event[6]
 				pfile = event[7]
 
+<<<<<<< HEAD:events.py
 				locf = open(lfile, 'a')
 				globf = open(gfile, 'a')
 				distf = open(dfile, 'a')
 				pcf = open(pfile, 'a')
 
+<<<<<<< HEAD:events.py
 			        #record the count dictionary so we know the rarity of pieces
 				pcf.write('Piece counts at time '+str(time)+' for node '+str(node_id)+' are: \n')
 				pcf.write('    Piece : Count \n') 
 				for i in count_dict:
 					pcf.write('    '+str(i)+' : '+str(count_dict[i])+'\n')
 
+<<<<<<< HEAD:events.py
 				globf.write('Global priority list at time '+str(time)+' is: \n')
 				for i in range(len(global_priority_list)):
 					globf.write(str(global_priority_list[i])+' ')
@@ -519,19 +503,44 @@ def log(event):
 				locf.write('\n')
 				distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
 				distance = 0
-				#for i in range(NUM_PIECES):
-				for i in range(10):
-					if i in local_priority_list:
-						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+				if DISTANCE_MODE == 'top_ten':
+				        #for i in range(NUM_PIECES):
+					for i in range(10):
+						if i in local_priority_list:
+							distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
 
-				if len(local_priority_list) > 0:
-					#distance = distance/len(local_priority_list)
-					distance = distance/10
-				else:
-					distance = 0
+					if len(local_priority_list) > 0:
+						distance = distance/10
+					else:
+						distance = 0
 			       
-				distf.write('    '+str(distance)+' \n')
-				distf.write('\n')
+					distf.write('    '+str(distance)+' \n')
+					distf.write('\n')
+				elif DISTANCE_MODE == 'weighted':
+					for i in range(NUM_PIECES):
+						if i in local_priority_list:
+							distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+							distance = distance / count_dict[i]
+
+					if len(local_priority_list) > 0:
+						distance = distance/len(local_priority_list)
+					else:
+						distance = 0
+			       
+					distf.write('    '+str(distance)+' \n')
+					distf.write('\n')
+				else:
+					for i in range(NUM_PIECES):
+						if i in local_priority_list:
+							distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
+
+					if len(local_priority_list) > 0:
+						distance = distance/len(local_priority_list)
+					else:
+						distance = 0
+			       
+						distf.write('    '+str(distance)+' \n')
+						distf.write('\n')
 		
 				locf.close()
 				globf.close()
@@ -552,7 +561,6 @@ def log(event):
 	else:
 		raise EventException('Invalid log_type')
 
-	#print
 	
 
 
@@ -563,7 +571,6 @@ handlers['ADD_NODE'] = add_node 		# Param: node_id, have_pieces
 handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, recieving node_id, piece_id, time_remaining
-#handlers['NEXT_DL'] = next_dl 			# used to schedule additional piece downloads on fast peers
 handlers['KILL_SIM'] = kill_sim			# No param
 handlers['LOG'] = log				# Param: log type
 
