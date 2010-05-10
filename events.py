@@ -170,6 +170,9 @@ def exchange_round(event):
 	# run the unchoke algorithm
 	nodes[node_id].update_unchoke(event[0]);
 
+	# clear the old upload rates cause we're going to recalculate all that stuff
+	nodes[node_id].curr_up.clear()
+
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
 		#print 'we are preparing to send something to node ',i
@@ -197,6 +200,9 @@ def exchange_round(event):
 		up_rate = nodes[node_id].max_up / len(nodes[node_id].unchoked)
 		transfer_rate =  min(remain_down, up_rate)
 
+		print 'remain_down',remain_down
+		print 'transfer_rate',transfer_rate
+
 		nodes[i].curr_down[node_id] = transfer_rate
 		nodes[node_id].curr_up[i] = transfer_rate
 
@@ -222,9 +228,11 @@ def exchange_round(event):
 	print 'completed',len(nodes[node_id].have_pieces),'/',len(nodes[node_id].have_pieces)+len(nodes[node_id].want_pieces)
 #	print 'interest',nodes[node_id].interest
 	print 'curr_up',nodes[node_id].curr_up
+	print 'max_up',nodes[node_id].max_up
 	print 'curr_down',nodes[node_id].curr_down
+	print 'max_down',nodes[node_id].max_down
 	print
-#
+
 #	cont = True
 #	while (cont):
 #		cmd = raw_input('>')

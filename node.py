@@ -340,6 +340,29 @@ class Node:
 				# Run this op_unchoke peer for another round.
 				self.op_unchoke_count = self.op_unchoke_count + 1
 
+	# Function to clean up the temp_peers dictionary
+	def clean_temp_peers(self, temp_peers):
+		del_list = []
+		for i in range(len(temp_peers)):
+			# if we're already interested in one of their pieces
+			if self.id in nodes[temp_peers[i]].interest.keys():
+				# get the piece index
+				piece_index = nodes[temp_peers[i]].interest[self.id]
+				# if we still want the piece
+				if piece_index in nodes[temp_peers[i]].want_pieces.keys():
+					if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
+						del nodes[temp_peers[i]].interest[self.id]
+					else:
+						del_list.append(temp_peers[i])
+				elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
+					del nodes[temp_peers[i]].interest[self.id]
+				else:
+					del_list.append(temp_peers[i])
+		
+		for i in range(len(del_list)):
+			temp_peers.remove(del_list[i])
+
+
 	# Update our entry in the interest dictionaries of our peers
 	# This should be called whenever a peer is added or an exchange round begins
 	def update_full_interest(self):
@@ -353,11 +376,6 @@ class Node:
 			temp_peers.append(i)
 
 		# First time we're here so random choice of piece
-		print 'WE ARE AT FULL INTEREST UPDATE'
-		#print 'We have ',self.have_pieces.keys()
-		#print 'starting is ',self.starting
-		print 'gossip is ',GOSSIP,' and style is ',GOSSIP_STYLE
-
 		if self.starting == 1:
 			# keey track of which pieces we're getting so we don't get the same piece from two peers
 			temp_del = []
@@ -395,32 +413,15 @@ class Node:
 			        #test_out.write(str(temp_peers)+'\n')
 				print 'UPDATING INTEREST WITH GOSSIP'
 			
-				del_list = []
-				for i in range(len(temp_peers)):
-					if self.id in nodes[temp_peers[i]].interest.keys():
-						piece_index = nodes[temp_peers[i]].interest[self.id]
-						if piece_index in nodes[temp_peers[i]].want_pieces.keys():
-							if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
-								del nodes[temp_peers[i]].interest[self.id]
-							else:
-								del_list.append(temp_peers[i])
-						elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
-							del nodes[temp_peers[i]].interest[self.id]
-						else:
-							del_list.append(temp_peers[i])
-		
-				for i in range(len(del_list)):
-					temp_peers.remove(del_list[i])
-
-	                        #print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
-
+				# clean up the temp peeers dictionary
+				self.clean_temp_peers(temp_peers)
+				
 				# go through the gossiped rare list and find out which peers (if any) have these pieces
 				temp_del2 = []
 				temp_del3 = []
 				for i in range(len(self.gossip_rare)):
 					temp_del = NUM_NODES+1
 					for j in range(len(temp_peers)):
-						print 'Searching the gossip list'
 						if self.gossip_rare[i][1] in nodes[temp_peers[j]].have_pieces:
 							nodes[temp_peers[j]].interest[self.id] = self.gossip_rare[i][1]
 							self.requested[temp_peers[j]] = self.gossip_rare[i][1]
@@ -433,13 +434,9 @@ class Node:
 
 				# remove this piece from the list so we don't try to get it again
 				if temp_del2 != []:
-			                #print 'we are removing something from the rare list and the priority list'
 					for i in range(len(temp_del2)):
-						print 'ACTUALLY FOUND SOMETHING IN RARE_LIST'
 						self.gossip_rare.remove(temp_del2[i])
 						# also remove this from the priority list cause we're getting it
-						print 'priority list is: ', self.priority_list
-						print 'thing we are trying to delete is: ',temp_del3[i]
 						self.priority_list.remove(temp_del3[i])
 				
 		                # go through the priority list and find out which peers have these pieces	
@@ -468,30 +465,10 @@ class Node:
 			        # temp_peers cause we don't want to touch that dictionary entry
 			        #test_out.write(str(temp_peers)+'\n')
 			
-				# For each peer
-				del_list = []
-				for i in range(len(temp_peers)):
-					# If we are already interested in one of their pieces.
-					if self.id in nodes[temp_peers[i]].interest.keys():
-						# Get the piece id.
-						piece_index = nodes[temp_peers[i]].interest[self.id]
-
-						# If we still want the piece.
-						if piece_index in nodes[temp_peers[i]].want_pieces.keys():
-							if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
-								del nodes[temp_peers[i]].interest[self.id]
-							else:
-								del_list.append(temp_peers[i])
-						elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
-							del nodes[temp_peers[i]].interest[self.id]
-						else:
-							del_list.append(temp_peers[i])
-		
-				for i in range(len(del_list)):
-					temp_peers.remove(del_list[i])
-
+				# clean up the temp peeers dictionary
+				self.clean_temp_peers(temp_peers)
+				
 				# go through the priority list and find out which peers have these pieces
-
 				temp_del2 = []
 				for i in range(len(self.priority_list)):
 					temp_del = len(temp_peers)+1
@@ -528,12 +505,6 @@ class Node:
 			if temp_del != NUM_PIECES+1:
 				self.gossip_rare.remove(temp_del)
 				# also remove this from the priority list cause we're getting it
-				print 'This node is: ',self.id
-				print 'priority list is: ', self.priority_list
-				print 'thing we are trying to delete is: ',temp_del2
-				print 'things we have: ',self.have_pieces
-				print 'things we want: ',self.want_pieces
-				print 'things we have requested; ',self.requested
 				self.priority_list.remove(temp_del2)
 						
 			# if we didn't find anything
