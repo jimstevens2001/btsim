@@ -141,16 +141,17 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			nodes[sending_node_id].curr_up[recieving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
-		print 'we are checking the interest dictionary for node ',sending_node_id
-		print 'this interest dictionary contains ',nodes[sending_node_id].interest
+		#print 'we are checking the interest dictionary for node ',sending_node_id
+		#print 'this interest dictionary contains ',nodes[sending_node_id].interest
 		piece_index = nodes[sending_node_id].interest[recieving_node_id]
-		print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
+		#print 'The piece index for node ',sending_node_id,' to node ',recieving_node_id,' is ', piece_index
 
 	if(piece_index != NUM_PIECES+1):
 		#print 'Want_pieces:',nodes[recieving_node_id].want_pieces
+		#print 'Priority_List:',nodes[recieving_node_id].priority_list
 		#print 'piece exchange recieving node id is: ',recieving_node_id
-		print 'receiving_node_id',recieving_node_id
-		print 'piece_index',piece_index
+		#print 'receiving_node_id',recieving_node_id
+		#print 'piece_index',piece_index
 		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
@@ -159,7 +160,7 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			event_time = time_remaining - finish_time
 			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
-			print 'We are scheduling a finish piece event for piece ',piece_index,' at time',wq.cur_time + finish_time
+			#print 'We are scheduling a finish piece event for piece ',piece_index,' at time',wq.cur_time + finish_time
 			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
 			nodes[sending_node_id].interest[recieving_node_id] = NUM_PIECES+1
 			# otherwise subtract the amount that we can get from the piece size and leave
@@ -173,6 +174,8 @@ def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_
 # also includes the unchoke algorithm at the beginning
 def exchange_round(event):
 	node_id = event[2]
+	
+	print "We are at the exchange round at time ",wq.cur_time
 
 	# if our altruism setting is to leave at the end of the round after we've got the whole file
 	# then schedule the leave event and don't start any new uploads
@@ -189,7 +192,6 @@ def exchange_round(event):
 	# Run the gossip protocol
 	if GOSSIP:
 		nodes[node_id].gossip()
-
 
 	# if we need more peers, get them
 	nodes[node_id].get_peers(event[0])
@@ -215,8 +217,8 @@ def exchange_round(event):
 	#print 'Unchoked (in ER):',nodes[node_id].unchoked
 	# determine which piece to send to each unchoked peer
 	for i in nodes[node_id].unchoked:
-		print 'we are preparing to send something to node ',i
-		print 'our unchoked dictionary was ',nodes[node_id].unchoked
+		#print 'we are preparing to send something to node ',i
+		#print 'our unchoked dictionary was ',nodes[node_id].unchoked
 		exchange_time = ROUND_TIME-1
 
 		del_list = []
@@ -252,8 +254,10 @@ def exchange_round(event):
 	wq.enqueue([wq.cur_time + ROUND_TIME, 'EXCHANGE_ROUND', node_id])
 
 	# Schedule the next log events
-	wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
 def finish_piece(event):
 	print 'FINISH PIECE REACHED'
@@ -263,10 +267,10 @@ def finish_piece(event):
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	print 'The finish piece recieving node is: ',recieving_node_id
-	print 'The finish piece sending node is: ',sending_node_id
-	print 'The piece being finished is: ',piece_id
-	print nodes[recieving_node_id].want_pieces
+	#print 'The finish piece recieving node is: ',recieving_node_id
+	#print 'The finish piece sending node is: ',sending_node_id
+	#print 'The piece being finished is: ',piece_id
+	#print nodes[recieving_node_id].want_pieces
 	del nodes[recieving_node_id].want_pieces[piece_id]
 	nodes[recieving_node_id].have_pieces[piece_id] = time
 
@@ -316,7 +320,7 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 		
 	else:
 		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
-	print 'amount left was ',amount_left
+	#print 'amount left was ',amount_left
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
@@ -406,11 +410,13 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Node '+str(node_id)+'s Interest Dictionary at time '+str(time)+' is: \n')
-			file.write('    Interested in Peers : For Piece \n')
+			nif = open(file, 'a')
+			nif.write('Node '+str(node_id)+'s Interest Dictionary at time '+str(time)+' is: \n')
+			nif.write('    Interested in Peers : For Piece \n')
 			for i in nodes[node_id].interest:
-				file.write('    '+str(i)+' : '+str(nodes[node_id].interest[i])+'\n')
-			file.write('\n')
+				nif.write('    '+str(i)+' : '+str(nodes[node_id].interest[i])+'\n')
+			nif.write('\n')
+			nif.close()
 		else:
 			print 'Node ',node_id,'s Interest Dictionary at time ',time,' is:'
 			print '    Interested in Peers : For Piece'
@@ -420,11 +426,13 @@ def log(event):
 		node_id = event[3]
 		if len(event) > 4:
 			file = event[4]
-			file.write('Priority list for node '+str(node_id)+' at time '+str(time)+' is: \n')
+			pqf = open(file, 'a')
+			pqf.write('Priority list for node '+str(node_id)+' at time '+str(time)+' is: \n')
 			for i in range(len(nodes[node_id].priority_list)):
-				file.write(str(nodes[node_id].priority_list[i])+' ')
-			file.write('\n')
-			file.write('\n')
+				pqf.write(str(nodes[node_id].priority_list[i])+' ')
+			pqf.write('\n')
+			pqf.write('\n')
+			pqf.close()
 		else:
 			print 'Priority list for node ',node_id,' at time ',time,' is'
 			print nodes[node_id].priority_list
@@ -511,12 +519,14 @@ def log(event):
 				locf.write('\n')
 				distf.write('Average distance between all pieces at time '+str(time)+' for node '+str(node_id)+' is: \n')
 				distance = 0
-				for i in range(NUM_PIECES):
+				#for i in range(NUM_PIECES):
+				for i in range(10):
 					if i in local_priority_list:
 						distance = distance + math.fabs(local_priority_list.index(i) - global_priority_list.index(i))
 
 				if len(local_priority_list) > 0:
-					distance = distance/len(local_priority_list)
+					#distance = distance/len(local_priority_list)
+					distance = distance/10
 				else:
 					distance = 0
 			       

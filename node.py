@@ -10,8 +10,10 @@ class Node:
 	def __init__(self, node_id, selection, altruism, leave, have):
 		self.id = node_id
 
+
 		# counter for log purposes
 		self.count = 0
+		self.starting = 1
 
 		# Specify the bounds on the number of allowed peers.
 		self.min_peers = MIN_PEERS
@@ -336,111 +338,82 @@ class Node:
 
 		#print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
 
-
-		# clear our entry in all of our peers interest dictionaries because it might be out of date
-		# however, if the entry is a partially downloaded piece, instead remove that peer from
-		# temp_peers cause we don't want to touch that dictionary entry
-		del_list = []
-		for i in range(len(temp_peers)):
-			if self.id in nodes[temp_peers[i]].interest.keys():
-				piece_index = nodes[temp_peers[i]].interest[self.id]
-				#print nodes[temp_peers[i]].interest[self.id]
-				if piece_index in nodes[temp_peers[i]].want_pieces.keys():
-					if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
-						del nodes[temp_peers[i]].interest[self.id]
-				elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
-					del nodes[temp_peers[i]].interest[self.id]
-				else:
-					del_list.append(temp_peers[i])
-		
-		for i in range(len(del_list)):
-			temp_peers.remove(del_list[i]) these pieces
-		temp_del2 = []
-		for i in range(len(self.priority_list)):
-			temp_del = len(temp_peers)+1
+		# First time we're here so random choice of piece
+		#print 'WE ARE AT FULL INTEREST UPDATE'
+		print 'We have ',self.have_pieces.keys()
+		if self.starting == 1:
+			# keey track of which pieces we're getting so we don't get the same piece from two peers
+			temp_del = []
+			#print 'we have peered with ',temp_peers
 			for j in range(len(temp_peers)):
-				if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-					nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-					temp_del = temp_peers[j]
-					temp_del2.append(self.priority_list[i])
-					# break out of the loop cause we've found a peer for that piece
-					break
-			# remove the peer we found for this piece so we don't associate it with another piece
-			if temp_del != len(temp_peers)+1:
-				temp_peers.remove(temp_del)
-			# remove this piece from the list so we don't try to get it again
-		if temp_del2 != []:
-			#print 'we are removing something from the priority list'
-			for i in range(len(temp_del2)):
-				#print temp_del2[i]
-				self.priority_list.remove(temp_del2[i])	
-				#print 'priority_list:',self.priority_list
+				# pick a random piece that this peer has to download
+				temp_pieces = {}
+				for k in nodes[temp_peers[j]].have_pieces.keys():
+					temp_pieces[k] = nodes[temp_peers[j]].have_pieces[k]
 
-		#print self.id
-		#print self.want_pieces
-		#print self.priority_list
-		#print self.interest
-
-	# Update our entry in the interest dictionary of a specific peer
-	def update_interest(self, peer):
-		# scan through our priority list and find the next thing that this peer has that we want
-		temp_del = NUM_PIECES+1
-
-
-		#print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
+				if temp_del != []:
+					#print 'our temp_pieces were',temp_pieces
+					#print 'the del list was ',temp_del
+					for k in range(len(temp_del)):
+						if temp_del[k] in temp_pieces.keys():
+							del temp_pieces[temp_del[k]]
+				if temp_pieces.keys() != []:
+					rand_piece =  random.choice(temp_pieces.keys())
+					temp_del.append(rand_piece)
+					nodes[temp_peers[j]].interest[self.id] = rand_piece
+					self.priority_list.remove(rand_piece)
+			
+			self.starting = 0
 				
-		# go through the priority list and find out which peers have these pieces
-		temp_del2 = []
-		for i in range(len(self.priority_list)):
-			temp_del = len(temp_peers)+1
-			for j in range(len(temp_peers)):
-				if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-					nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-					temp_del = temp_peers[j]
-					temp_del2.append(self.priority_list[i])
-					# break out of the loop cause we've found a peer for that piece
-					break
-			# remove the peer we found for this piece so we don't associate it with another piece
-			if temp_del != len(temp_peers)+1:
-				temp_peers.remove(temp_del)
-			# remove this piece from the list so we don't try to get it again
-		if temp_del2 != []:
-			#print 'we are removing something from the priority list'
-			for i in range(len(temp_del2)):
-				#print temp_del2[i]
-				self.priority_list.remove(temp_del2[i])	
-				#print 'priority_list:',self.priority_list
+					
+		else:
+			# clear our entry in all of our peers interest dictionaries because it might be out of date
+			# however, if the entry is a partially downloaded piece, instead remove that peer from
+			# temp_peers cause we don't want to touch that dictionary entry
+			#test_out.write(str(temp_peers)+'\n')
+			
+			del_list = []
+			for i in range(len(temp_peers)):
+				if self.id in nodes[temp_peers[i]].interest.keys():
+					piece_index = nodes[temp_peers[i]].interest[self.id]
+				        #print nodes[temp_peers[i]].interest[self.id]
+					if piece_index in nodes[temp_peers[i]].want_pieces.keys():
+						if nodes[temp_peers[i]].want_pieces[piece_index] == PIECE_SIZE:
+							del nodes[temp_peers[i]].interest[self.id]
+						else:
+							del_list.append(temp_peers[i])
+					elif piece_index in nodes[temp_peers[i]].have_pieces.keys():
+						del nodes[temp_peers[i]].interest[self.id]
+					else:
+						del_list.append(temp_peers[i])
+		
+			for i in range(len(del_list)):
+				temp_peers.remove(del_list[i])
 
-		#print self.id
-		#print self.want_pieces
-		#print self.priority_list
-		#print self.interest
-
-	# Update our entry in the interest dictionary of a specific peer
-	def update_interest(self, peer):
-		# scan through our priority list and find the next thing that this peer has that we want
-		temp_del = NUM_PIECES+1
- these pieces
-		temp_del2 = []
-		for i in range(len(self.priority_list)):
-			temp_del = len(temp_peers)+1
-			for j in range(len(temp_peers)):
-				if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
-					nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
-					temp_del = temp_peers[j]
-					temp_del2.append(self.priority_list[i])
-					# break out of the loop cause we've found a peer for that piece
-					break
-			# remove the peer we found for this piece so we don't associate it with another piece
-			if temp_del != len(temp_peers)+1:
-				temp_peers.remove(temp_del)
+			#print 'Node ',self.id,' temp_peer dictionary is ',temp_peers
+				
+		        # go through the priority list and find out which peers have these pieces
+		
+			temp_del2 = []
+			for i in range(len(self.priority_list)):
+				temp_del = len(temp_peers)+1
+				for j in range(len(temp_peers)):
+					if self.priority_list[i] in nodes[temp_peers[j]].have_pieces:
+						nodes[temp_peers[j]].interest[self.id] = self.priority_list[i]
+						temp_del = temp_peers[j]
+						temp_del2.append(self.priority_list[i])
+					        # break out of the loop cause we've found a peer for that piece
+						break
+			        # remove the peer we found for this piece so we don't associate it with another piece
+				if temp_del != len(temp_peers)+1:
+					temp_peers.remove(temp_del)
 			# remove this piece from the list so we don't try to get it again
-		if temp_del2 != []:
-			#print 'we are removing something from the priority list'
-			for i in range(len(temp_del2)):
-				#print temp_del2[i]
-				self.priority_list.remove(temp_del2[i])	
-				#print 'priority_list:',self.priority_list
+			if temp_del2 != []:
+			        #print 'we are removing something from the priority list'
+				for i in range(len(temp_del2)):
+				        #print temp_del2[i]
+					self.priority_list.remove(temp_del2[i])	
+				        #print 'priority_list:',self.priority_list
 
 		#print self.id
 		#print self.want_pieces

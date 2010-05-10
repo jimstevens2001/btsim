@@ -11,7 +11,8 @@ from globals import *
 
 # Initialize the work queue with ADD_NODE operations.
 start_times = []
-for i in range(50):
+
+for i in range(NUM_NODES):
 	start_times.append(random.randint(0,100))
 start_times.sort()
 
@@ -23,7 +24,7 @@ wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list])
 
 # Open the output files to store the logs
 # This just creates the files that are then appended to by the log events
-fpf = open(file_progress_file, 'w')
+#fpf = open(file_progress_file, 'w')
 locf = open(local_file, 'w')
 globf = open(global_file, 'w')
 distf = open(distance_file, 'w')
@@ -41,7 +42,7 @@ pcf = open(piece_count_file, 'w')
 #======================================
 
 # Close the output files that store the logs
-fpf.close()
+#fpf.close()
 locf.close()
 globf.close()
 distf.close()
@@ -59,7 +60,7 @@ pcf.close()
 #======================================
 
 
-wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
+#wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 
 # Records for the seed
 #for j in range(10, 300, 10):
@@ -69,18 +70,21 @@ wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 	#wq.enqueue([j, 'LOG', 'interest', 101, intf])
 
 
-for i in range(50):
+for i in range(NUM_NODES):
 	x = start_times[i]
-	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'eternal_seed', 0])
+
+	wq.enqueue([x, 'ADD_NODE', i, 'priority', 'leave_on_complete', 0])
+	#wq.enqueue([x, 'ADD_NODE', i, 'priority', 'eternal_seed', 0])
+
 	# periodic checks on the progression of the swarm
 	#for j in range(x+1, 900, 10):
-		#wq.enqueue([j, 'LOG', 'priority_queue', i, pqf])
-	wq.enqueue([x+1, 'LOG', 'file_progress', i, file_progress_file])
+	        #wq.enqueue([x+1, 'LOG', 'priority_queue', i, priority_file])
+	#wq.enqueue([x+1, 'LOG', 'file_progress', i, file_progress_file])
 		#wq.enqueue([j, 'LOG', 'node_peers', i, pf])
 		#wq.enqueue([j, 'LOG', 'curr_down', i, cdf])
 		#wq.enqueue([j, 'LOG', 'curr_up', i, cuf])
-		#wq.enqueue([j, 'LOG', 'interest', i, intf])
-		#wq.enqueue([j, 'LOG', 'want', i, wf])
+	        #wq.enqueue([x+1, 'LOG', 'interest', i, interest_file])
+	        #wq.enqueue([j, 'LOG', 'want', i, wf])
 	wq.enqueue([x+1, 'LOG', 'compare', i, local_file, global_file, distance_file, piece_count_file])
 		
 	#wq.enqueue([x+100, 'REMOVE_NODE', i])
@@ -91,7 +95,7 @@ for i in range(50):
 
 #wq.enqueue([10, 'LOG', 'interest_dict', 11])
 #wq.enqueue([150, 'LOG', 'interest_dict', 11])
-#wq.enqueue([900, 'KILL_SIM'])
+#wq.enqueue([4000, 'KILL_SIM'])
 
 
 # Main queue loop
