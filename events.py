@@ -262,7 +262,14 @@ def finish_piece(event):
 		nodes[recieving_node_id].gossip()
 
 	# Update the interest dictionary
-	nodes[recieving_node_id].update_interest(sending_node_id)
+	# but only do this if we're still peered
+	if (sending_node_id in nodes[recieving_node_id].peers) or (sending_node_id in nodes[recieving_node_id].unchoked):
+		nodes[recieving_node_id].update_interest(sending_node_id)
+
+	print 'the recieving_node_id is: ',recieving_node_id
+	print 'the sending_node_id is: ',sending_node_id
+	print nodes[sending_node_id].interest.keys()
+	print nodes[recieving_node_id].interest.keys()
 
 	# Check to see if there is anything more we can get from this peer
 	if recieving_node_id in nodes[sending_node_id].interest.keys():
@@ -282,7 +289,11 @@ def finish_piece(event):
 	# So we're not done but this peer isn't any good to us anymore
 	# lets get rid of it then
 	#else:
-	#	nodes[recieving_node_id].remove_peer(sending_node_id)
+		#print 'We are removing a peer'
+		#nodes[sending_node_id].remove_peer(recieving_node_id)
+		#nodes[recieving_node_id].remove_peer(sending_node_id)
+		#print nodes[sending_node_id].interest.keys()
+		#print nodes[recieving_node_id].interest.keys()
 
 # sending or receiving node leaves mid round
 def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
