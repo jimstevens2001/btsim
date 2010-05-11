@@ -452,7 +452,7 @@ class Node:
 				
 		       		
 		else:
-			if GOSSIP == True and GOSSIP_STYLE == 'priority':
+			if GOSSIP == True and (GOSSIP_STYLE == 'priority' or GOSSIP_STYLE == 'all'):
 			        # clear our entry in all of our peers interest dictionaries because it might be out of date
 			        # however, if the entry is a partially downloaded piece, instead remove that peer from
 			        # temp_peers cause we don't want to touch that dictionary entry
@@ -483,7 +483,7 @@ class Node:
 
 	# Update our entry in the interest dictionary of a specific peer
 	def update_interest(self, peer):
-		if GOSSIP == True and GOSSIP_STYLE == 'priority':
+		if GOSSIP == True and (GOSSIP_STYLE == 'priority' or GOSSIP_STYLE == 'all'):
 			temp_peers = [peer]
 			# scan through the gossiped priority list and see if we can get one of those pieces from this peer
 			self.gossip_scan(temp_peers)
@@ -662,6 +662,86 @@ class Node:
 						else:
 							temp_dict[i] = count
 					count = count - 0.1
+
+				#rebuild the gossip_rare list
+				for i in temp_dict.keys():
+					self.gossip_rare.append([temp_dict[i], i])
+
+				#sort the gossip_rare list, this returns least to greatest, but we want least to greatest
+				self.gossip_rare.sort()
+
+				#reverse the list so we get greatest to least
+				self.gossip_rare.reverse()
+
+				# Initialize the node's sequence number if necessary
+				if msg[0] not in self.peer_gossip_numbers:
+					self.peer_gossip_numbers[msg[0]] = 0
+				
+				# Update the gossip sequence number for this node.
+				self.peer_gossip_numbers[msg[0]] = msg[1]
+
+				# Forward the message to my peers
+				for i in all_peers:
+					nodes[i].add_gossip(msg)
+
+			elif GOSSIP_STYLE == 'all':
+				#make sure this is a fresh message
+				if msg[0] in self.peer_gossip_numbers:
+					if msg[1] < self.peer_gossip_numbers[msg[0]]:
+						break
+
+				#temporary dictionary of gossiped pieces
+				temp_dict = {}
+				for i in self.gossip_rare:
+					if i[1] in self.priority_list:
+						temp_dict[i[1]] = i[0]
+
+				#clear the gossip_rare list, we're about to rebuild it
+				self.gossip_rare = []
+
+				#update gossip piece counts
+				#this is weighted by the place of the piece in rare message
+				#most rare =  count + 1.3, second most rare = count + 1.2, etc
+				count = 1.3
+				ppiece = []
+				for i in msg[2]:
+					# don't add it to the rarest list if we have already requested or gotten it from someone
+					# in which case it would no longer be in the priority queue
+					if i in self.priority_list:
+						if i in temp_dict.keys():
+							temp_dict[i] = temp_dict[i] + count
+						else:
+							temp_dict[i] = count
+					# we actually have the piece so try to peer
+					elif i in self.have_list:
+						# If the node is not already a peer
+						if msg[0] not in all_peers:
+							if msg[0] not in peer_candidates:
+								peer_candidates.append(msg[0])	
+							# If so, then decide whether to peer with the source node
+							# I have a 2/P chance to peer with this node
+							upper_bound = 0.2
+							if piece_dict[i] == 0:
+								probability = upper_bound
+							else:
+								probability = upper_bound / piece_dict[i]
+							if random.random() < probability:
+								make_peer = True
+								ppiece.append(i)
+					count = count - 0.1
+				
+				# Add the peer if necessary
+				if make_peer and (self.num_peers() < self.max_peers) and (nodes[msg[0]].num_peers() < self.max_peers):
+					print wq.cur_time,': gossip resulted in new peering between',self.id,'and',msg[0],'for one of these pieces:',ppiece
+					self.add_peer(msg[0], wq.cur_time)
+					nodes[msg[0]].add_peer(self.id, wq.cur_time)
+					cont = True
+					while (cont):
+						cmd = raw_input('>')
+						if cmd == '':
+							cont = False
+						else:
+							print eval(cmd)
 
 				#rebuild the gossip_rare list
 				for i in temp_dict.keys():

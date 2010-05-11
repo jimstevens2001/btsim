@@ -214,8 +214,8 @@ def exchange_round(event):
 	# Schedule the next log events
 	#wq.enqueue([wq.cur_time, 'LOG', 'file_progress', node_id, file_progress_file])
 	wq.enqueue([wq.cur_time, 'LOG', 'compare', node_id, local_file, global_file, distance_file, piece_count_file])
-	wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
-	wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_list_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'curr_down', node_id, curr_down_file])
+	#wq.enqueue([wq.cur_time, 'LOG', 'priority_queue', node_id, priority_list_file])
 	#wq.enqueue([wq.cur_time, 'LOG', 'interest', node_id, interest_file])
 
 
@@ -279,6 +279,10 @@ def finish_piece(event):
 			wq.enqueue([wq.cur_time, 'REMOVE_NODE', recieving_node_id])
 		elif nodes[recieving_node_id].altruism == 'leave_time_after_complete':
 			wq.enqueue([wq.cur_time + nodes[recieving_node_id].leave_time, 'REMOVE_NODE', recieving_node_id])
+	# So we're not done but this peer isn't any good to us anymore
+	# lets get rid of it then
+	#else:
+	#	nodes[recieving_node_id].remove_peer(sending_node_id)
 
 # sending or receiving node leaves mid round
 def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
