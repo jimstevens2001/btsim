@@ -267,10 +267,10 @@ def finish_piece(event):
 	if (sending_node_id in nodes[recieving_node_id].peers) or (sending_node_id in nodes[recieving_node_id].unchoked):
 		nodes[recieving_node_id].update_interest(sending_node_id)
 
-	print 'the recieving_node_id is: ',recieving_node_id
-	print 'the sending_node_id is: ',sending_node_id
-	print nodes[sending_node_id].interest.keys()
-	print nodes[recieving_node_id].interest.keys()
+	#print 'the recieving_node_id is: ',recieving_node_id
+	#print 'the sending_node_id is: ',sending_node_id
+	#print nodes[sending_node_id].interest.keys()
+	#print nodes[recieving_node_id].interest.keys()
 
 	# Check to see if there is anything more we can get from this peer
 	if recieving_node_id in nodes[sending_node_id].interest.keys():

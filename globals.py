@@ -3,8 +3,8 @@ from work_queue import WorkQueue
 # Simulation parameters
 
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
