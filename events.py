@@ -22,8 +22,9 @@ def add_node(event):
 	leave_time = event[5]
 	altruism = event[4]
 	have = event[6]
+	rate = event[7]
 
-	nodes[node_id] = Node(node_id, selection, altruism, leave_time, have)
+	nodes[node_id] = Node(node_id, selection, altruism, leave_time, have, rate)
 
 	print 'Added node',node_id,'at',event[0]
 	print

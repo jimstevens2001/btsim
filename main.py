@@ -13,7 +13,7 @@ from globals import *
 
 # create a full have list for the seed
 have_list = [PIECE_SIZE for i in range(NUM_PIECES)]
-wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list])
+wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list, [800,800]])
 
 # Open the output files to store the logs
 # This just creates the files that are then appended to by the log events
@@ -42,7 +42,7 @@ pcf.close()
 start_times = [random.randint(0,100) for i in range(NUM_NODES)]
 start_times.sort()
 for i in range(NUM_NODES):
-	wq.enqueue([start_times[i], 'ADD_NODE', i, 'priority', LEECHER_ALTRUISM, 0, []])
+	wq.enqueue([start_times[i], 'ADD_NODE', i, 'priority', LEECHER_ALTRUISM, 0, [], None])
 
 
 wq.enqueue([5000, 'KILL_SIM'])

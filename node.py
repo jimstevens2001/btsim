@@ -7,7 +7,7 @@ from globals import *
 
 #Node class to contain explicit copies of the bit field and peer lists
 class Node:
-	def __init__(self, node_id, selection, altruism, leave, have):
+	def __init__(self, node_id, selection, altruism, leave, have, rate):
 		self.id = node_id
 
 		# Save the start time for the node.
@@ -63,11 +63,18 @@ class Node:
 
 		self.never_unchoked = []
 
-		# Default download capacity
-		self.max_down = random.betavariate(1.5, 5)*1000
+		if rate:
+			# If rate is not None, then use the given rate.
+			self.max_down = rate[0]
+			self.max_up = rate[1]
+		else:
+			# Otherwise, compute random rates.
 
-		# Default upload capacity
-		self.max_up = self.max_down * random.uniform(0.5, 1.0)
+			# Default download capacity
+			self.max_down = random.betavariate(1.5, 5)*1000
+
+			# Default upload capacity
+			self.max_up = self.max_down * random.uniform(0.5, 1.0)
 
 		self.remain_down = self.max_down # Download capacity not being used yet
 
