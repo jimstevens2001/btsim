@@ -29,8 +29,8 @@ NUM_NODES = 100
 
 # If NO_SEED_TEST is true, there will be no seed
 # and instead the file will be distributed among the leecers.
-#NO_SEED_TEST = True
-NO_SEED_TEST = False
+NO_SEED_TEST = True
+#NO_SEED_TEST = False
 
 # Set number of peers
 MAX_PEERS = 10
