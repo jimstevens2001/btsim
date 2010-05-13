@@ -3,12 +3,12 @@ from work_queue import WorkQueue
 # Simulation parameters
 
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
-GOSSIP_STYLE = 'all'
+GOSSIP_STYLE = 'priority'
 
 
 # Specify whether to use global knowledge or not
@@ -25,7 +25,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 100
+NUM_NODES = 500
 
 ########################################################################################3
 
