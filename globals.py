@@ -12,8 +12,8 @@ GOSSIP_STYLE = 'peering'
 
 
 # Specify whether to use global knowledge or not
-#GLOBAL_KNOWLEDGE = False
-GLOBAL_KNOWLEDGE = True
+GLOBAL_KNOWLEDGE = False
+#GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
@@ -25,7 +25,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 500
+NUM_NODES = 100
 
 # If NO_SEED_TEST is true, there will be no seed
 # and instead the file will be distributed among the leecers.
