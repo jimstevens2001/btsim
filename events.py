@@ -343,8 +343,17 @@ def check_dead(event):
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	print 'run_time:'
-	print run_time
+	rate_run = {}
+	for i in nodes:
+		rate_run[i] = []
+		if i in run_time:
+			rate_run[i].append(run_time[i])
+		else:
+			rate_run[i].append('I')
+		rate_run[i].append(nodes[i].max_down)
+
+	print 'rate_run:'
+	print rate_run
 	values = [run_time[i] for i in run_time.keys()]
 	if len(values) > 0:
 		print 'Average',float(sum(values))/len(values)

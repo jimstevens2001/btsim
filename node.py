@@ -71,10 +71,12 @@ class Node:
 			# Otherwise, compute random rates.
 
 			# Default download capacity
-			self.max_down = random.betavariate(1.5, 5)*1000
+			#self.max_down = random.betavariate(1.5, 5)*1000
+			self.max_down = random.uniform(50,100)
 
 			# Default upload capacity
-			self.max_up = self.max_down * random.uniform(0.5, 1.0)
+			#self.max_up = self.max_down * random.uniform(0.5, 1.0)
+			self.max_up = 0.5 * self.max_down
 
 		self.remain_down = self.max_down # Download capacity not being used yet
 
