@@ -13,7 +13,7 @@ from globals import *
 
 # create a full have list for the seed
 have_list = [PIECE_SIZE for i in range(NUM_PIECES)]
-#wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list, [800,800]])
+wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list, [800,800]])
 
 # Open the output files to store the logs
 # This just creates the files that are then appended to by the log events
