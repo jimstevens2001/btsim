@@ -8,7 +8,7 @@ GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
-GOSSIP_STYLE = 'all'
+GOSSIP_STYLE = 'peering'
 
 
 # Specify whether to use global knowledge or not
@@ -33,8 +33,8 @@ NO_SEED_TEST = True
 #NO_SEED_TEST = False
 
 # Set number of peers
-MAX_PEERS = 20
-DESIRED_PEERS = 10
+MAX_PEERS = 10
+DESIRED_PEERS = 5
 
 ########################################################################################3
 
