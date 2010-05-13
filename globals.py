@@ -12,8 +12,8 @@ GOSSIP_STYLE = 'peering'
 
 
 # Specify whether to use global knowledge or not
-#GLOBAL_KNOWLEDGE = False
-GLOBAL_KNOWLEDGE = True
+GLOBAL_KNOWLEDGE = False
+#GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
@@ -64,9 +64,9 @@ run_time = {}
 # would like to be set this from the command line
 # but its not necessary right now
 #file_progress_file = 'Records/file_progress_full_gossip_100u'
-local_file = 'Records/local_view_full_gossip_100u'
-global_file = 'Records/global_view_full_gossip_100u'
-distance_file = 'Records/distance_full_gossip_100u'
-piece_count_file = 'Records/piece_count_full_gossip_100u'
+local_file = 'Records/local_view_unbalanced3l1'
+global_file = 'Records/global_view_unbalanced3l1'
+distance_file = 'Records/distance_unbalanced3l1'
+piece_count_file = 'Records/piece_count_unbalanced3l1'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
