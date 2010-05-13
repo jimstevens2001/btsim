@@ -321,6 +321,26 @@ def partial_download(time, event_time, sending_node_id, recieving_node_id, piece
 	else:
 		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
 
+def check_dead(event):
+	# Make a list of all pieces.
+	pieces = range(NUM_PIECES)
+
+	# Remove the pieces held by current nodes.
+	for i in nodes.keys():
+		for j in nodes[i].have_pieces.keys():
+			if j in pieces:
+				pieces.remove(j)
+			
+			if len(pieces) == 0:
+				# Return if all pieces are held.
+				return
+	if len(pieces) > 0:
+		# Kill the simulation if any pieces are missing.
+		print 'PIECES ARE LOST:',pieces
+		wq.enqueue([wq.cur_time, 'KILL_SIM'])
+	else:
+		wq.enqueue([wq.cur_time + 10, 'CHECK_DEAD'])
+
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
 	print 'run_time:'
@@ -592,6 +612,7 @@ handlers['ADD_NODE'] = add_node 		# Param: node_id, have_pieces
 handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
 handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, recieving node_id, piece_id, time_remaining
+handlers['CHECK_DEAD'] = check_dead			# No param
 handlers['KILL_SIM'] = kill_sim			# No param
 handlers['LOG'] = log				# Param: log type
 
