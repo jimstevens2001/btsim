@@ -39,7 +39,7 @@ def remove_node(event):
 	node_id = event[2]
 
 	# Compute the total time this node executed.
-	run_time[node_id] = wq.cur_time - nodes[node_id].start_time
+	run_time[node_id] = [wq.cur_time - nodes[node_id].start_time, nodes[node_id].max_down]
 
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
@@ -343,18 +343,11 @@ def check_dead(event):
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
-	rate_run = {}
-	for i in nodes:
-		rate_run[i] = []
-		if i in run_time:
-			rate_run[i].append(run_time[i])
-		else:
-			rate_run[i].append('I')
-		rate_run[i].append(nodes[i].max_down)
-
-	print 'rate_run:'
-	print rate_run
-	values = [run_time[i] for i in run_time.keys()]
+	print 'nodes left:'
+	print nodes.keys()
+	print 'run_time:'
+	print run_time
+	values = [run_time[i][0] for i in run_time.keys()]
 	if len(values) > 0:
 		print 'Average',float(sum(values))/len(values)
 	sys.exit(0)
