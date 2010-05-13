@@ -32,13 +32,15 @@ NUM_NODES = 100
 NO_SEED_TEST = True
 #NO_SEED_TEST = False
 
+# Set number of peers
+MAX_PEERS = 20
+DESIRED_PEERS = 10
+
 ########################################################################################3
 
 # Constants
 
 MIN_PEERS = 5
-MAX_PEERS = 60
-DESIRED_PEERS = 30
 ROUND_TIME = 10
 NUM_SEEDS = 1
 
