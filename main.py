@@ -44,7 +44,7 @@ start_times = [random.randint(0,100) for i in range(NUM_NODES)]
 start_times.sort()
 
 # Compute the number of pieces each node gets in the NO_SEED_TEST.
-have_step = (NUM_PIECES / NUM_NODES)+300
+have_step = (NUM_PIECES / NUM_NODES)+275
 pieces = range(NUM_PIECES)
 
 for i in range(NUM_NODES):

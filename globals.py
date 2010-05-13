@@ -10,18 +10,16 @@ GOSSIP = False
 #Options: priority, peering, all
 GOSSIP_STYLE = 'peering'
 
-
-# Specify whether to use global knowledge or not
-GLOBAL_KNOWLEDGE = False
-#GLOBAL_KNOWLEDGE = True
-
+# Specify the knowledge mode to use
+# Options: local, global, omni
+KNOWLEDGE_MODE = 'local'
 
 # Distance Calculation
-#Options: normal, top_ten, weighted
+# Options: normal, top_ten, weighted
 DISTANCE_MODE = 'normal'
 
 # Set altruism for leechers
-#LEECHER_ALTRUISM = 'eternal_seed'
+# LEECHER_ALTRUISM = 'eternal_seed'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
@@ -64,9 +62,9 @@ run_time = {}
 # would like to be set this from the command line
 # but its not necessary right now
 #file_progress_file = 'Records/file_progress_full_gossip_100u'
-local_file = 'Records/local_view_unbalanced3o1'
-global_file = 'Records/global_view_unbalanced3o1'
-distance_file = 'Records/distance_unbalanced3o1'
-piece_count_file = 'Records/piece_count_unbalanced3o1'
+local_file = 'Records/local_view_unbalanced275l5'
+global_file = 'Records/global_view_unbalanced275l5'
+distance_file = 'Records/distance_unbalanced275l5'
+piece_count_file = 'Records/piece_count_unbalanced275l5'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
