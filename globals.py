@@ -12,8 +12,8 @@ GOSSIP_STYLE = 'peering'
 
 
 # Specify whether to use global knowledge or not
-GLOBAL_KNOWLEDGE = False
-#GLOBAL_KNOWLEDGE = True
+#GLOBAL_KNOWLEDGE = False
+GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
