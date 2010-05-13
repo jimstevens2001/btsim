@@ -595,6 +595,10 @@ def log(event):
 			nodes[node_id].count = 0
 		else:
 			nodes[node_id].count = nodes[node_id].count + 1
+	elif log_type == 'gossip_count':
+		node_id = event[3]
+		if len(event) > 4:
+			file = event[4]
 	elif log_type == 'interest_dict':
 		node_id = event[3]
 		print 'The interest dictionary for node ',node_id,' is '

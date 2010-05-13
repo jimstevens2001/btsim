@@ -530,7 +530,7 @@ class Node:
 		count_list = []
 
 		# If global 
-		if GLOBAL_KNOWLEDGE == 1:
+		if (KNOWLEDGE_MODE == 'global' or KNOWLEDGE_MODE == 'omni'):
 			all_peers = nodes.keys()
 		else:
 			all_peers = self.peers.keys() + self.unchoked.keys() + [self.id]
@@ -541,7 +541,7 @@ class Node:
 				# don't want to add pieces that are already in the interest dictionary
 				count_dict[i] = 0
 				for j in all_peers:
-					if GLOBAL_KNOWLEDGE == 1:
+					if KNOWLEDGE_MODE == 'omni':
 						if i in nodes[j].have_pieces:
 							if i in count_dict:
 								count_dict[i] += 1
@@ -592,6 +592,8 @@ class Node:
 			for i in all_peers:
 				if j in nodes[i].have_pieces:
 					cnt += 1
+			if j in self.requested:
+				cnt += 1
 			piece_dict[j] = cnt
 			piece_list.append([cnt, j])
 		piece_list.sort()
