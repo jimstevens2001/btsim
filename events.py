@@ -39,7 +39,7 @@ def remove_node(event):
 	node_id = event[2]
 
 	# Compute the total time this node executed.
-	run_time[node_id] = wq.cur_time - nodes[node_id].start_time
+	run_time[node_id] = [wq.cur_time - nodes[node_id].start_time, nodes[node_id].max_down]
 
 	# find all events for this node and remove them from the work queue
 	# Search the queue for events for this node_id
@@ -89,44 +89,44 @@ def remove_node(event):
 
 
 # This is the function to identify pieces to be exchanged between nodes and to schedule that piece exchange in the work_queue
-def piece_exchange(sending_node_id, recieving_node_id, time_remaining, transfer_rate):
+def piece_exchange(sending_node_id, receiving_node_id, time_remaining, transfer_rate):
 	# choose a random piece to upload
 	# first make of list of everything that we have that they want	
 		
 	if nodes[sending_node_id].piece_selection == 'random':
 		can_fill = []
-		for j in nodes[recieving_node_id].want_pieces.keys():
-			if nodes[recieving_node_id].want_pieces[j] != 0:
+		for j in nodes[receiving_node_id].want_pieces.keys():
+			if nodes[receiving_node_id].want_pieces[j] != 0:
 				if j in nodes[sending_node_id].have_pieces.keys():
 					can_fill.append(j)
 		if can_fill != []:
 			piece_index = random.choice(can_fill)
 		else:
 			# setting rates to 0 cause nothing is moving cause we have nothing they want
-			nodes[recieving_node_id].curr_down[sending_node_id] = 0
-			nodes[sending_node_id].curr_up[recieving_node_id] = 0
+			nodes[receiving_node_id].curr_down[sending_node_id] = 0
+			nodes[sending_node_id].curr_up[receiving_node_id] = 0
 			piece_index = NUM_PIECES+1
 	else:
 		# We are checking the interest dictionary for node sending_node_id
-		piece_index = nodes[sending_node_id].interest[recieving_node_id]
+		piece_index = nodes[sending_node_id].interest[receiving_node_id]
 
 	if(piece_index != NUM_PIECES+1):
-		piece_remaining = nodes[recieving_node_id].want_pieces[piece_index]
+		piece_remaining = nodes[receiving_node_id].want_pieces[piece_index]
 
 		# if its small enough to get in one round then add a finish piece event to the work queue
 		if piece_remaining <= (transfer_rate*time_remaining):
 			# maybe we should store the time the piece is finished in the have list instead of the size of the piece
 			finish_time = piece_remaining/transfer_rate # this should come out in seconds
 			event_time = time_remaining - finish_time
-			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, recieving_node_id, piece_index, event_time])
+			wq.enqueue([wq.cur_time + finish_time, 'FINISH_PIECE', sending_node_id, receiving_node_id, piece_index, event_time])
 			#print 'We are scheduling a finish piece event for piece ',piece_index,' at time',wq.cur_time + finish_time
-			nodes[recieving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
-			nodes[sending_node_id].interest[recieving_node_id] = NUM_PIECES+1
+			nodes[receiving_node_id].want_pieces[piece_index] = 0 # set this to 0 to indicate that we are currently finishing it
+			nodes[sending_node_id].interest[receiving_node_id] = NUM_PIECES+1
 			# otherwise subtract the amount that we can get from the piece size and leave
 			# it in the want list
 		else:
-			nodes[recieving_node_id].want_pieces[piece_index] = nodes[recieving_node_id].want_pieces[piece_index] - (transfer_rate*time_remaining)
-			nodes[recieving_node_id].remain_down = max(0, (nodes[recieving_node_id].remain_down - transfer_rate))
+			nodes[receiving_node_id].want_pieces[piece_index] = nodes[receiving_node_id].want_pieces[piece_index] - (transfer_rate*time_remaining)
+			nodes[receiving_node_id].remain_down = max(0, (nodes[receiving_node_id].remain_down - transfer_rate))
 			time_remaining = 0
 
 # Use this to update each peers download and upload rates per round and to decide 
@@ -245,87 +245,110 @@ def exchange_round(event):
 def finish_piece(event):
 	time = event[0]
 	sending_node_id = event[2] # include this just so remove node can find these in the work queue
-	recieving_node_id = event[3]
+	receiving_node_id = event[3]
 	piece_id = event[4]
 	exchange_time = event[5]
 	
-	del nodes[recieving_node_id].want_pieces[piece_id]
-	nodes[recieving_node_id].have_pieces[piece_id] = time
+	del nodes[receiving_node_id].want_pieces[piece_id]
+	nodes[receiving_node_id].have_pieces[piece_id] = time
 
 	# make sure this piece isn't still somehow in the global rare list
-	for i in range(len(nodes[recieving_node_id].gossip_rare)):
-		if nodes[recieving_node_id].gossip_rare[i][1] == piece_id:
-			del nodes[recieving_node_id].gossip_rare[i]
+	for i in range(len(nodes[receiving_node_id].gossip_rare)):
+		if nodes[receiving_node_id].gossip_rare[i][1] == piece_id:
+			del nodes[receiving_node_id].gossip_rare[i]
 			break # list should only have one entry per piece, if this isn't true we have bigger problems
  
 	# Check the gossip to see what's changed
 	if GOSSIP and GOSSIP_STYLE == 'priority':
-		nodes[recieving_node_id].gossip()
+		nodes[receiving_node_id].gossip()
 
 	# Update the interest dictionary
 	# but only do this if we're still peered
-	if (sending_node_id in nodes[recieving_node_id].peers) or (sending_node_id in nodes[recieving_node_id].unchoked):
-		nodes[recieving_node_id].update_interest(sending_node_id)
+	if (sending_node_id in nodes[receiving_node_id].peers) or (sending_node_id in nodes[receiving_node_id].unchoked):
+		nodes[receiving_node_id].update_interest(sending_node_id)
 
-	print 'the recieving_node_id is: ',recieving_node_id
-	print 'the sending_node_id is: ',sending_node_id
-	print nodes[sending_node_id].interest.keys()
-	print nodes[recieving_node_id].interest.keys()
+	#print 'the receiving_node_id is: ',receiving_node_id
+	#print 'the sending_node_id is: ',sending_node_id
+	#print nodes[sending_node_id].interest.keys()
+	#print nodes[receiving_node_id].interest.keys()
 
 	# Check to see if there is anything more we can get from this peer
-	if recieving_node_id in nodes[sending_node_id].interest.keys():
-		if recieving_node_id in nodes[sending_node_id].unchoked:
-			up_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+	if receiving_node_id in nodes[sending_node_id].interest.keys():
+		if receiving_node_id in nodes[sending_node_id].unchoked:
+			up_rate = nodes[sending_node_id].curr_up[receiving_node_id]
 		else:
 			raise Exception('Attempting to upload to someone not unchoked')
 
-		piece_exchange(sending_node_id, recieving_node_id, exchange_time, up_rate)
+		piece_exchange(sending_node_id, receiving_node_id, exchange_time, up_rate)
 	# Check to see if there is anything more we can get from anyone
 	# if not, check to see if we should just seed or check out
-	elif nodes[recieving_node_id].want_pieces.keys() == []:
-		if nodes[recieving_node_id].altruism == 'leave_on_complete':
-			wq.enqueue([wq.cur_time, 'REMOVE_NODE', recieving_node_id])
-		elif nodes[recieving_node_id].altruism == 'leave_time_after_complete':
-			wq.enqueue([wq.cur_time + nodes[recieving_node_id].leave_time, 'REMOVE_NODE', recieving_node_id])
+	elif nodes[receiving_node_id].want_pieces.keys() == []:
+		if nodes[receiving_node_id].altruism == 'leave_on_complete':
+			wq.enqueue([wq.cur_time, 'REMOVE_NODE', receiving_node_id])
+		elif nodes[receiving_node_id].altruism == 'leave_time_after_complete':
+			wq.enqueue([wq.cur_time + nodes[receiving_node_id].leave_time, 'REMOVE_NODE', receiving_node_id])
 	# So we're not done but this peer isn't any good to us anymore
 	# lets get rid of it then
 	#else:
 		#print 'We are removing a peer'
-		#nodes[sending_node_id].remove_peer(recieving_node_id)
-		#nodes[recieving_node_id].remove_peer(sending_node_id)
+		#nodes[sending_node_id].remove_peer(receiving_node_id)
+		#nodes[receiving_node_id].remove_peer(sending_node_id)
 		#print nodes[sending_node_id].interest.keys()
-		#print nodes[recieving_node_id].interest.keys()
+		#print nodes[receiving_node_id].interest.keys()
 
 # sending or receiving node leaves mid round
-def partial_download(time, event_time, sending_node_id, recieving_node_id, piece_id):
+def partial_download(time, event_time, sending_node_id, receiving_node_id, piece_id):
 	
 	# time =  the time now
 	# event_time = when the download was supposed to finish
 	# compute how much of the piece got downloaded
-	transfer_rate = nodes[sending_node_id].curr_up[recieving_node_id]
+	transfer_rate = nodes[sending_node_id].curr_up[receiving_node_id]
 	total_time = PIECE_SIZE/transfer_rate
 	time_started = event_time - total_time
 	time_elapsed = time_started - time
 	amount_downloaded = transfer_rate*time_elapsed
-	amount_left = nodes[recieving_node_id].want_pieces[piece_id] - amount_downloaded
+	amount_left = nodes[receiving_node_id].want_pieces[piece_id] - amount_downloaded
 	if amount_left == 0:
-		del nodes[recieving_node_id].want_pieces[piece_id]
-		nodes[recieving_node_id].have_pieces[piece_id] = time
+		del nodes[receiving_node_id].want_pieces[piece_id]
+		nodes[receiving_node_id].have_pieces[piece_id] = time
 		
-		if nodes[recieving_node_id].want_pieces.keys() == []:
-			if nodes[recieving_node_id].altruism == 'leave_on_complete':
-				wq.enqueue([wq.cur_time, 'REMOVE_NODE', recieving_node_id])
-			elif nodes[recieving_node_id].altruism == 'leave_time_after_complete':
-				wq.enqueue([wq.cur_time + nodes[recieving_node_id].leave_time, 'REMOVE_NODE', recieving_node_id])
+		if nodes[receiving_node_id].want_pieces.keys() == []:
+			if nodes[receiving_node_id].altruism == 'leave_on_complete':
+				wq.enqueue([wq.cur_time, 'REMOVE_NODE', receiving_node_id])
+			elif nodes[receiving_node_id].altruism == 'leave_time_after_complete':
+				wq.enqueue([wq.cur_time + nodes[receiving_node_id].leave_time, 'REMOVE_NODE', receiving_node_id])
 		
 	else:
-		nodes[recieving_node_id].want_pieces[piece_id] = amount_left
+		nodes[receiving_node_id].want_pieces[piece_id] = amount_left
+
+def check_dead(event):
+	# Make a list of all pieces.
+	pieces = range(NUM_PIECES)
+
+	# Remove the pieces held by current nodes.
+	for i in nodes.keys():
+		for j in nodes[i].have_pieces.keys():
+			if j in pieces:
+				pieces.remove(j)
+			
+			if len(pieces) == 0:
+				# Return if all pieces are held.
+				wq.enqueue([wq.cur_time + 10, 'CHECK_DEAD'])
+				return
+	if len(pieces) > 0:
+		# Kill the simulation if any pieces are missing.
+		print 'PIECES ARE LOST:',pieces
+		wq.enqueue([wq.cur_time, 'KILL_SIM'])
+	else:
+		wq.enqueue([wq.cur_time + 10, 'CHECK_DEAD'])
 
 def kill_sim(event):
 	print 'KILL_SIM event at time',event[0]
+	print 'nodes left:'
+	print nodes.keys()
 	print 'run_time:'
 	print run_time
-	values = [run_time[i] for i in run_time.keys()]
+	values = [run_time[i][0] for i in run_time.keys()]
 	if len(values) > 0:
 		print 'Average',float(sum(values))/len(values)
 	sys.exit(0)
@@ -591,7 +614,8 @@ handlers = {}
 handlers['ADD_NODE'] = add_node 		# Param: node_id, have_pieces
 handlers['REMOVE_NODE'] = remove_node		# Param: node_id
 handlers['EXCHANGE_ROUND'] = exchange_round 	# Param: node_id
-handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, recieving node_id, piece_id, time_remaining
+handlers['FINISH_PIECE'] = finish_piece         # Param: sending node_id, receiving node_id, piece_id, time_remaining
+handlers['CHECK_DEAD'] = check_dead			# No param
 handlers['KILL_SIM'] = kill_sim			# No param
 handlers['LOG'] = log				# Param: log type
 

@@ -8,12 +8,12 @@ GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
-GOSSIP_STYLE = 'priority'
+GOSSIP_STYLE = 'peering'
 
 
 # Specify whether to use global knowledge or not
-GLOBAL_KNOWLEDGE = False
-#GLOBAL_KNOWLEDGE = True
+#GLOBAL_KNOWLEDGE = False
+GLOBAL_KNOWLEDGE = True
 
 
 # Distance Calculation
@@ -27,13 +27,23 @@ LEECHER_ALTRUISM = 'leave_on_complete'
 # Set number of nodes
 NUM_NODES = 500
 
+# If NO_SEED_TEST is true, there will be no seed
+# and instead the file will be distributed among the leecers.
+NO_SEED_TEST = True
+#NO_SEED_TEST = False
+
+# Set number of peers
+MAX_PEERS = 10
+DESIRED_PEERS = 5
+
+# Seed Speed
+SEED_SPEED = [100,100]
+
 ########################################################################################3
 
 # Constants
 
 MIN_PEERS = 5
-MAX_PEERS = 60
-DESIRED_PEERS = 30
 ROUND_TIME = 10
 NUM_SEEDS = 1
 

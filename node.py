@@ -71,10 +71,12 @@ class Node:
 			# Otherwise, compute random rates.
 
 			# Default download capacity
-			self.max_down = random.betavariate(1.5, 5)*1000
+			#self.max_down = random.betavariate(1.5, 5)*1000
+			self.max_down = random.uniform(50,100)
 
 			# Default upload capacity
-			self.max_up = self.max_down * random.uniform(0.5, 1.0)
+			#self.max_up = self.max_down * random.uniform(0.5, 1.0)
+			self.max_up = 0.5 * self.max_down
 
 		self.remain_down = self.max_down # Download capacity not being used yet
 
@@ -304,7 +306,7 @@ class Node:
 				self.op_unchoke = -1
 
 			# make sure the current optimistic unchoke is still interested
-			elif self.op_unchoke != -1:
+			else:
 				if self.op_unchoke not in self.interest.keys():
 					if self.op_unchoke_count != 0:
 						self.op_unchoke_count = 0
@@ -346,6 +348,15 @@ class Node:
 			else:
 				# Run this op_unchoke peer for another round.
 				self.op_unchoke_count = self.op_unchoke_count + 1
+		#if there are no peers left, check to make sure this peer should still be optimistically unchoked
+		else:
+			if self.op_unchoke not in self.interest.keys():
+				if self.op_unchoke_count != 0:
+					self.op_unchoke_count = 0
+
+					# Move the op_unchoke back to the choked list
+					self.choke(self.op_unchoke)
+					self.op_unchoke = -1
 
 	# Function to clean up the temp_peers dictionary
 	def clean_temp_peers(self, temp_peers):
