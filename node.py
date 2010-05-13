@@ -541,11 +541,23 @@ class Node:
 				# don't want to add pieces that are already in the interest dictionary
 				count_dict[i] = 0
 				for j in all_peers:
-					if i in nodes[j].have_pieces:
-						if i in count_dict:
-							count_dict[i] += 1
-						else:
-							count_dict[i] = 1
+					if GLOBAL_KNOWLEDGE == 1:
+						if i in nodes[j].have_pieces:
+							if i in count_dict:
+								count_dict[i] += 1
+							else:
+								count_dict[i] = 1
+						elif i in nodes[j].requested:
+							if i in count_dict:
+								count_dict[i] += 1
+							else:
+								count_dict[i] = 1
+					else:
+						if i in nodes[j].have_pieces:
+							if i in count_dict:
+								count_dict[i] += 1
+							else:
+								count_dict[i] = 1
 				if i in count_dict:
 					count_list.append([count_dict[i], i])				
 
