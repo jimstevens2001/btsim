@@ -27,6 +27,11 @@ LEECHER_ALTRUISM = 'leave_on_complete'
 # Set number of nodes
 NUM_NODES = 100
 
+# If NO_SEED_TEST is true, there will be no seed
+# and instead the file will be distributed among the leecers.
+NO_SEED_TEST = True
+#NO_SEED_TEST = False
+
 ########################################################################################3
 
 # Constants
