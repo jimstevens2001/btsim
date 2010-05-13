@@ -333,6 +333,7 @@ def check_dead(event):
 			
 			if len(pieces) == 0:
 				# Return if all pieces are held.
+				wq.enqueue([wq.cur_time + 10, 'CHECK_DEAD'])
 				return
 	if len(pieces) > 0:
 		# Kill the simulation if any pieces are missing.
