@@ -23,7 +23,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 100
+NUM_NODES = 50
 
 # If NO_SEED_TEST is true, there will be no seed
 # and instead the file will be distributed among the leecers.
@@ -62,9 +62,9 @@ run_time = {}
 # would like to be set this from the command line
 # but its not necessary right now
 #file_progress_file = 'Records/file_progress_full_gossip_100u'
-local_file = 'Records/local_view_unbalanced275l5'
-global_file = 'Records/global_view_unbalanced275l5'
-distance_file = 'Records/distance_unbalanced275l5'
-piece_count_file = 'Records/piece_count_unbalanced275l5'
+local_file = 'Records/local_view_unbalanced275l2'
+global_file = 'Records/global_view_unbalanced275l2'
+distance_file = 'Records/distance_unbalanced275l2'
+piece_count_file = 'Records/piece_count_unbalanced275l2'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
