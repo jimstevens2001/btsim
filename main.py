@@ -78,7 +78,6 @@ for i in range(NUM_NODES):
 wq.enqueue([101, 'CHECK_DEAD'])
 wq.enqueue([5000, 'KILL_SIM'])
 
-
 # Main queue loop
 while not wq.empty():
 	cur_event = wq.dequeue()

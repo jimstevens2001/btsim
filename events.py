@@ -343,6 +343,10 @@ def check_dead(event):
 		wq.enqueue([wq.cur_time + 10, 'CHECK_DEAD'])
 
 def kill_sim(event):
+	ofile = open(outfile, 'w')
+	ofile.write('KILL_SIM event at time '+str(event[0])+'\n')
+	ofile.write('nodes left: '+str(nodes.keys())+'\n')
+	ofile.write('run_time: '+str(run_time)+'\n')
 	print 'KILL_SIM event at time',event[0]
 	print 'nodes left:'
 	print nodes.keys()
@@ -351,6 +355,8 @@ def kill_sim(event):
 	values = [run_time[i][0] for i in run_time.keys()]
 	if len(values) > 0:
 		print 'Average',float(sum(values))/len(values)
+		ofile.write('Average '+str(float(sum(values))/len(values))+'\n')
+	ofile.close()
 	sys.exit(0)
 
 
