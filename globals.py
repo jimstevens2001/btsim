@@ -3,12 +3,12 @@ from work_queue import WorkQueue
 # Simulation parameters
 
 # Gossip
-#GOSSIP = True
-GOSSIP = False
+GOSSIP = True
+#GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
-GOSSIP_STYLE = 'peering'
+GOSSIP_STYLE = 'priority'
 
 # Specify the knowledge mode to use
 # Options: local, global, omni
@@ -37,7 +37,7 @@ DESIRED_PEERS = 5
 # Seed Speed
 SEED_SPEED = [100,100]
 
-########################################################################################3
+########################################################################################
 
 # Constants
 
@@ -62,9 +62,9 @@ run_time = {}
 # would like to be set this from the command line
 # but its not necessary right now
 #file_progress_file = 'Records/file_progress_full_gossip_100u'
-local_file = 'Records/local_view_unbalanced275l5'
-global_file = 'Records/global_view_unbalanced275l5'
-distance_file = 'Records/distance_unbalanced275l5'
-piece_count_file = 'Records/piece_count_unbalanced275l5'
+local_file = 'Records/local_view_unbalanced275gos3'
+global_file = 'Records/global_view_unbalanced275gos3'
+distance_file = 'Records/distance_unbalanced275gos3'
+piece_count_file = 'Records/piece_count_unbalanced275gos3'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
