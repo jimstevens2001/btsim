@@ -1,4 +1,5 @@
 from work_queue import WorkQueue
+import sys #not sure if this is going to do what I want it to do...
 
 # Simulation parameters
 
@@ -12,7 +13,7 @@ GOSSIP_STYLE = 'peering'
 
 # Specify the knowledge mode to use
 # Options: local, global, omni
-KNOWLEDGE_MODE = 'local'
+KNOWLEDGE_MODE = 'omni'
 
 # Distance Calculation
 # Options: normal, top_ten, weighted
@@ -23,7 +24,7 @@ DISTANCE_MODE = 'normal'
 LEECHER_ALTRUISM = 'leave_on_complete'
 
 # Set number of nodes
-NUM_NODES = 50
+NUM_NODES = 100
 
 # If NO_SEED_TEST is true, there will be no seed
 # and instead the file will be distributed among the leecers.
@@ -68,3 +69,8 @@ distance_file = 'Records/distance_unbalanced275l2'
 piece_count_file = 'Records/piece_count_unbalanced275l2'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
+
+if len(sys.argv[1]) > 1:
+	outfile = str(sys.argv[1])
+else:
+    outfile = 'Records/out'
