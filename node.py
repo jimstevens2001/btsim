@@ -101,7 +101,7 @@ class Node:
 		# want_pieces dictionary
 		# key: the pieces we DO NOT have
 		# value: the number of subblocks left to download
-		self.want_pieces = {} 
+		self.want_pieces = {}
 		self.init_want(have)
 
 		# Define the gossip queue
@@ -111,7 +111,15 @@ class Node:
 		self.my_gossip_num = 0
 		self.peer_gossip_numbers = {}
 
-
+		# Store the important details about this node on its creation
+		# but only do this if we aren't loading in values
+		if LOAD_RATES == False:
+			sf = open(statefile, 'a')
+			sf.write(str(self.id)+'\n')
+			sf.write(str(self.start_time)+'\n')
+			sf.write(str(self.max_down)+'\n')
+			sf.write(str(self.max_up)+'\n')
+			sf.close()
 
 
 	# Initialize the have_pieces dictionary

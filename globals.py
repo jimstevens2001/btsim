@@ -70,7 +70,20 @@ piece_count_file = 'Records/piece_count_unbalanced275gos3'
 #curr_down_file = 'Records/curr_down_full_gossip_100u'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
 
-if len(sys.argv[1]) > 1:
+LOAD_RATES = False
+
+if len(sys.argv) > 3:
 	outfile = str(sys.argv[1])
+	statefile = str(sys.argv[2])
+	# check to see if the state file is what we're reading from or writing to
+	if str(sys.argv[3]) == 'True':
+		LOAD_RATES = True		
+if len(sys.argv) > 2:
+	outfile = str(sys.argv[1])
+	statefile = str(sys.argv[2])
+elif len(sys.argv) > 1:
+	outfile = str(sys.argv[1])
+	statefile = 'temp'
 else:
     outfile = 'Records/out'
+    statefile = 'temp'

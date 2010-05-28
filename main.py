@@ -42,7 +42,6 @@ pcf.close()
 
 #wq.enqueue([0, 'LOG', 'file_progress', 1001, fpf])
 
-
 # Initialize the work queue with ADD_NODE operations.
 start_times = [random.randint(0,100) for i in range(NUM_NODES)]
 start_times.sort()
@@ -50,6 +49,14 @@ start_times.sort()
 # Compute the number of pieces each node gets in the NO_SEED_TEST.
 have_step = (NUM_PIECES / NUM_NODES)+275
 pieces = range(NUM_PIECES)
+
+if LOAD_RATES == True:
+	sf = open(statefile, 'r')
+else:
+	sf = open(statefile, 'w')
+	sf.close()
+
+# Check to see if we should be loading node rates from a file
 
 for i in range(NUM_NODES):
 	have = []
@@ -72,11 +79,24 @@ for i in range(NUM_NODES):
 			else:
 				have.append(0)
 
-	wq.enqueue([start_times[i], 'ADD_NODE', i, 'priority', LEECHER_ALTRUISM, 0, have, None])
-
+	if LOAD_RATES == True:
+		node_id = sf.readline()
+		node_id = int(node_id)
+		start_time = sf.readline()
+		start_time = int(start_time)
+		down_rate = sf.readline()
+		down_rate = float(down_rate)
+		up_rate = sf.readline()
+		up_rate = float(up_rate)
+		wq.enqueue([start_time, 'ADD_NODE', node_id, 'priority', LEECHER_ALTRUISM, 0, have, [down_rate, up_rate]])
+	else:
+		wq.enqueue([start_times[i], 'ADD_NODE', i, 'priority', LEECHER_ALTRUISM, 0, have, None])
+	
 
 wq.enqueue([101, 'CHECK_DEAD'])
 wq.enqueue([5000, 'KILL_SIM'])
+
+sf.close()
 
 # Main queue loop
 while not wq.empty():
