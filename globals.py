@@ -4,8 +4,8 @@ import sys #not sure if this is going to do what I want it to do...
 # Simulation parameters
 
 # Gossip
-GOSSIP = True
-#GOSSIP = False
+#GOSSIP = True
+GOSSIP = False
 
 #How gossip messages are generated and handled
 #Options: priority, peering, all
@@ -13,7 +13,7 @@ GOSSIP_STYLE = 'priority'
 
 # Specify the knowledge mode to use
 # Options: local, global, omni
-KNOWLEDGE_MODE = 'omni'
+KNOWLEDGE_MODE = 'local'
 
 # Distance Calculation
 # Options: normal, top_ten, weighted
@@ -28,8 +28,12 @@ NUM_NODES = 100
 
 # If NO_SEED_TEST is true, there will be no seed
 # and instead the file will be distributed among the leecers.
-NO_SEED_TEST = True
-#NO_SEED_TEST = False
+#NO_SEED_TEST = True
+NO_SEED_TEST = False
+
+# If SEED_LEAVE_TEST is true, the seed will leave at some random time
+SEED_LEAVE_TEST = True
+#SEED_LEAVE_TEST = False
 
 # Set number of peers
 MAX_PEERS = 10
@@ -71,7 +75,15 @@ piece_count_file = 'Records/piece_count_unbalanced275gos3'
 #priority_list_file = 'Records/priority_list_full_gossip_100u'
 
 LOAD_RATES = False
+SEED_LEAVE = 1250
 
+if len(sys.argv) > 4:
+	outfile = str(sys.argv[1])
+	statefile = str(sys.argv[2])
+	# check to see if the state file is what we're reading from or writing to
+	if str(sys.argv[3]) == 'True':
+		LOAD_RATES = True
+	SEED_LEAVE = int(sys.argv[4])
 if len(sys.argv) > 3:
 	outfile = str(sys.argv[1])
 	statefile = str(sys.argv[2])

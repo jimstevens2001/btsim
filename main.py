@@ -17,8 +17,7 @@ if not NO_SEED_TEST:
 	wq.enqueue([0, 'ADD_NODE', 1001, 'priority', 'eternal_seed', 0, have_list, SEED_SPEED])
 	
 	if SEED_LEAVE_TEST:
-		leave_time = random.randint(750,1000)
-		wq.enqueue([leave_time, 'REMOVE_NODE', 1001])
+		wq.enqueue([SEED_LEAVE, 'REMOVE_NODE', 1001])
 
 # Open the output files to store the logs
 # This just creates the files that are then appended to by the log events
